@@ -3,10 +3,6 @@ for i in range(16, 21):
     larm += [i, i + 14, i + 28]
     i += 1
 
-l0 = list(range(30, 34)) + list(range(36, 40))
-l2 = [20, 21, 48, 49, 26]
-l3 = [27, 41]
-
 
 class Key():
     def __init__(self, code: int, char: str, /):
@@ -38,11 +34,11 @@ class Key():
         else:
             self.finger = 'f2'
 # penalty
-        if code in l0:
+        if code in list(range(30, 34)) + list(range(36, 40)):
             self.penalty = 0
-        elif code in l2:
+        elif code in [20, 21, 48, 49, 26]:
             self.penalty = 2
-        elif code in l3:
+        elif code in [27, 41]:
             self.penalty = 3
         else:
             self.penalty = 1
@@ -64,9 +60,9 @@ class Layout():
         d = dict(list(zip(self.ur, range(16, 28))) +
                  list(zip(self.hr, range(30, 41))) +
                  list(zip(self.lr, range(44, 54))))
-        keys = []
+        keys = dict()
         for k in d.keys():
-            keys.append(Key(d[k], k))
+            keys[k] = Key(d[k], k)
         self.keys = keys
 
     def readf(self, filename, /):
@@ -74,13 +70,23 @@ class Layout():
         with open(filename) as f:
             text = f.readlines()
             for line in text:
-                for ch in line:
-                    k = ''
-                    for key in self.keys:
-                        if ch == key.char:
-                            k = key
-                    if k == '':
-                        pass
-                    else:
-                        pen_counter += k.penalty
+                pen_counter += self.pen_count(line)
         print(f'Кол-во штрафов: {pen_counter}')
+
+    def lexeme(self, filename, /):
+        with open(filename) as f:
+            text = f.readlines()
+        with open("result.txt", 'w') as f:
+            for line in text:
+                penalty = self.pen_count(line)
+                f.write(line[:-1] + ' ' + str(penalty) + '\n')
+
+    def pen_count(self, line: str, /):
+        pen_counter = 0
+        for ch in line:
+            k = self.keys.get(ch, 0)
+            if k == 0:
+                pass
+            else:
+                pen_counter += k.penalty
+        return pen_counter
