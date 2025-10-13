@@ -104,3 +104,4 @@ class Layout():
                 pen_counter += k.penalty
             print(pen_counter)
         return pen_counter
+
