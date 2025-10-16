@@ -1,8 +1,3 @@
-larm = [1]
-for i in range(2, 21):
-    larm += [i, i + 14, i + 28]
-
-
 class Key():
     def __init__(self, code: int, char: str, /, alt=False):
         if not (code in range(1, 54)):
@@ -22,6 +17,9 @@ class Key():
             self.row = "lr"
 
 # arm
+        larm = [1]
+        for i in range(2, 7):
+            larm += [i, i + 14, i + 28, i + 42]
         if code in larm:
             self.arm = "l"
         else:
@@ -50,8 +48,8 @@ class Key():
 
 
 class Layout():
-    def __init__(self, tr='ё1234567890-=', ur='йцукенгшщзхъ\\', hr='фывапролджэ',
-                 lr='ячсмитьбю.'):
+    def __init__(self, tr='ё1234567890-=', ur='йцукенгшщзхъ\\',
+                 hr='фывапролджэ', lr='ячсмитьбю.'):
         if not ([len(r) for r in (tr, ur, hr, lr)] == [13, 13, 11, 10]):
             print("Ряды введены неправильно")
             return
@@ -73,10 +71,16 @@ class Layout():
 
     def readf(self, filename, /):
         pen_counter = 0
+        fingers_count = [0] * 8
         with open(filename) as f:
             text = f.readlines()
             for line in text:
-                pen_counter += self.pen_count(line)
+                pc, fc = self.pen_count(line)
+                pen_counter += pc
+                fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
+        print(f'Нагрузка на пальцы: {fingers_count}')
+        print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}\t' +
+              f'правая - {sum(fingers_count[4:])}')
         print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
 
     def lexeme(self, filename, /):
@@ -84,12 +88,13 @@ class Layout():
             text = f.readlines()
         with open("result.txt", 'w') as f:
             for line in text:
-                penalty = self.pen_count(line)
+                penalty = self.pen_count(line)[0]
                 f.write(line[:-1] + ' ' + str(penalty) + '\n')
         print("Штрафы записаны в файл result.txt")
 
     def pen_count(self, line: str, /):
         pen_counter = 0
+        fingers_count = [0] * 8  # 0 - 7 левый мизинец - правый
         for ch in line:
             if not ch.isalpha():
                 continue
@@ -99,9 +104,31 @@ class Layout():
             else:
                 if ch.isupper():
                     pen_counter += 2  # shift
+                    if k.arm == 'l':
+                        fingers_count[7] += 2
+                    else:
+                        fingers_count[0] += 2
                 if k.alt:
                     pen_counter += 1  # alt
                 pen_counter += k.penalty
-            print(pen_counter)
-        return pen_counter
-
+                if k.arm == 'l':
+                    match k.finger:
+                        case 'f5':
+                            fingers_count[0] += k.penalty
+                        case 'f4':
+                            fingers_count[1] += k.penalty
+                        case 'f3':
+                            fingers_count[2] += k.penalty
+                        case 'f2':
+                            fingers_count[3] += k.penalty
+                else:
+                    match k.finger:
+                        case 'f2':
+                            fingers_count[4] += k.penalty
+                        case 'f3':
+                            fingers_count[5] += k.penalty
+                        case 'f4':
+                            fingers_count[6] += k.penalty
+                        case 'f5':
+                            fingers_count[7] += k.penalty
+        return (pen_counter, fingers_count)
