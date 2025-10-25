@@ -74,7 +74,7 @@ class Layout():
 
     def extract_keys(self):
        """
-       получает список из нажатых клавишь
+       получает словарь из нажатых клавишь
        """
         d = dict(list(zip(self.tr, range(1, 14))) +
                  list(zip(self.ur, range(16, 29))) +
