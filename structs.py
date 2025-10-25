@@ -1,4 +1,14 @@
 class Key():
+    """
+    этот класс определяет нажата ли нужная нам клавиша из рядов,
+     которые обозначены номерами в каждом из рядов.
+     hr- домашний(средний) ряд
+     tr- верхний ряд
+     ur- ряд с цифрами
+     lr- нижний ряд
+    Так же он определяет руку(arm) и пальцы(f[2-5]), которые нажимают на клавиши,
+     и определяет штрафы для них(penalty)
+    """
     def __init__(self, code: int, char: str, /, alt=False):
         if not (code in range(1, 54)):
             print("Неправильный номер клавиши")
@@ -48,6 +58,9 @@ class Key():
 
 
 class Layout():
+    """
+    Класс Layout задаёт символьные значения для каждой клавиши
+    """
     def __init__(self, tr='ё1234567890-=', ur='йцукенгшщзхъ\\',
                  hr='фывапролджэ', lr='ячсмитьбю.'):
         if not ([len(r) for r in (tr, ur, hr, lr)] == [13, 13, 11, 10]):
@@ -60,6 +73,9 @@ class Layout():
         self.extract_keys()
 
     def extract_keys(self):
+       """
+       получает список из нажатых клавишь
+       """
         d = dict(list(zip(self.tr, range(1, 14))) +
                  list(zip(self.ur, range(16, 29))) +
                  list(zip(self.hr, range(30, 41))) +
@@ -70,6 +86,9 @@ class Layout():
         self.keys = keys
 
     def readf(self, filename, /):
+        """
+        Выводит результат всей нагрузки на руки, пальцы, штрафы
+        """
         pen_counter = 0
         fingers_count = [0] * 8
         with open(filename) as f:
@@ -84,6 +103,10 @@ class Layout():
         print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
 
     def lexeme(self, filename, /):
+        """
+        Прогоняет программу по файлу с лексемами и записывает
+         штрафы в файл
+        """
         with open(filename) as f:
             text = f.readlines()
         with open("result.txt", 'w') as f:
@@ -93,6 +116,9 @@ class Layout():
         print("Штрафы записаны в файл result.txt")
 
     def pen_count(self, line: str, /):
+        """
+        Считает штрафы для рук и пальцев
+        """
         pen_counter = 0
         fingers_count = [0] * 8  # 0 - 7 левый мизинец - правый
         for ch in line:
