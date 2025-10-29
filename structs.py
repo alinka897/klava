@@ -73,9 +73,9 @@ class Layout():
         self.extract_keys()
 
     def extract_keys(self):
-       """
-       получает словарь из нажатых клавишь
-       """
+        """
+        получает словарь из нажатых клавишь
+        """
         d = dict(list(zip(self.tr, range(1, 14))) +
                  list(zip(self.ur, range(16, 29))) +
                  list(zip(self.hr, range(30, 41))) +
@@ -85,29 +85,34 @@ class Layout():
             keys[k] = Key(d[k], k)
         self.keys = keys
 
-    def readf(self, filename, /):
+    def readf(self, path, /):
         """
         Выводит результат всей нагрузки на руки, пальцы, штрафы
         """
         pen_counter = 0
         fingers_count = [0] * 8
-        with open(filename) as f:
+        arms_count = [0] * 3
+        with open(path) as f:
             text = f.readlines()
             for line in text:
-                pc, fc = self.pen_count(line)
+                pc, fc, ac = self.pen_count(line)
                 pen_counter += pc
                 fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
+                arms_count = [x + y for x, y in zip(arms_count, ac)] 
+        filename = path.split('/')[-1]
         print(f'Нагрузка на пальцы: {fingers_count}')
-        print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}\t' +
+        print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}, ' +
               f'правая - {sum(fingers_count[4:])}')
+        print(f'Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, ' +
+              f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
         print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
 
-    def lexeme(self, filename, /):
+    def lexeme(self, path, /):
         """
         Прогоняет программу по файлу с лексемами и записывает
          штрафы в файл
         """
-        with open(filename) as f:
+        with open(path) as f:
             text = f.readlines()
         with open("result.txt", 'w') as f:
             for line in text:
@@ -119,6 +124,7 @@ class Layout():
         """
         Считает штрафы для рук и пальцев
         """
+        arm_count = [0] * 3 # левая, двуручие, правая
         pen_counter = 0
         fingers_count = [0] * 8  # 0 - 7 левый мизинец - правый
         for ch in line:
@@ -129,11 +135,11 @@ class Layout():
                 continue
             else:
                 if ch.isupper():
-                    pen_counter += 2  # shift
+                    pen_counter += 1  # shift
                     if k.arm == 'l':
-                        fingers_count[7] += 2
+                        fingers_count[7] += 1
                     else:
-                        fingers_count[0] += 2
+                        fingers_count[0] += 1
                 if k.alt:
                     pen_counter += 1  # alt
                 pen_counter += k.penalty
@@ -157,4 +163,15 @@ class Layout():
                             fingers_count[6] += k.penalty
                         case 'f5':
                             fingers_count[7] += k.penalty
-        return (pen_counter, fingers_count)
+
+                if ch.isupper() and k.alt:
+                    arm_count[1] += 2 + k.penalty
+                if ch.isupper() or k.alt:
+                    arm_count[1] += 1 + k.penalty
+                else:
+                    if k.arm == 'l':
+                        arm_count[0] += k.penalty
+                    else:
+                        arm_count[2] += k.penalty
+
+        return (pen_counter, fingers_count, arm_count)
