@@ -1,13 +1,14 @@
 class Key():
     """
-    этот класс определяет нажата ли нужная нам клавиша из рядов,
-     которые обозначены номерами в каждом из рядов.
-     hr- домашний(средний) ряд
-     tr- верхний ряд
-     ur- ряд с цифрами
-     lr- нижний ряд
-    Так же он определяет руку(arm) и пальцы(f[2-5]), которые нажимают на клавиши,
-     и определяет штрафы для них(penalty)
+    Класс Key в зависимости от кода клавиши
+    определяет ряд клавиши:
+    tr - ряд с цифрами
+    ur - верхний ряд
+    hr - домашний ряд
+    lr - нижний ряд
+    Определяет руку(arm) и пальцы(f2-5),
+    которые нажимают на клавишу,
+    и штраф для нее(penalty)
     """
     def __init__(self, code: int, char: str, /, alt=False):
         if not (code in range(1, 54)):
@@ -15,7 +16,7 @@ class Key():
         self.code = code
         self.char = char
         self.alt = alt
-# 1 - ~ 29 - \
+# 1 - ~ 28 - \
 # row
         if code in range(1, 14):
             self.row = "tr"
@@ -59,10 +60,11 @@ class Key():
 
 class Layout():
     """
-    Класс Layout задаёт символьные значения для каждой клавиши
+    Класс Layout определяет раскладку, т.е. сопоставляет значения клавиш
+    с соответствующим экземпляром класса Key
     """
-    def __init__(self, tr='ё1234567890-=', ur='йцукенгшщзхъ\\',
-                 hr='фывапролджэ', lr='ячсмитьбю.'):
+    def __init__(self, /, tr='ё1234567890-=', ur='йцукенгшщзхъ\\',
+                 hr='фывапролджэ', lr='ячсмитьбю.', **alts):
         if not ([len(r) for r in (tr, ur, hr, lr)] == [13, 13, 11, 10]):
             print("Ряды введены неправильно")
             return
@@ -70,24 +72,29 @@ class Layout():
         self.ur = ur
         self.hr = hr
         self.lr = lr
-        self.extract_keys()
+        self.extract_keys(alts)
 
-    def extract_keys(self):
+    def extract_keys(self, alts: dict):
         """
-        получает словарь из нажатых клавишь
+        Получает словари с клавишами раскладки и
+        альтовыми клавишами
         """
         d = dict(list(zip(self.tr, range(1, 14))) +
                  list(zip(self.ur, range(16, 29))) +
                  list(zip(self.hr, range(30, 41))) +
                  list(zip(self.lr, range(44, 54))))
         keys = dict()
+        alt_keys = dict()
         for k in d.keys():
+            if k in alts.keys():
+                alt_keys[alts[k]] = Key(d[k], alts[k], alt=True)
             keys[k] = Key(d[k], k)
         self.keys = keys
+        self.alts = alt_keys
 
-    def readf(self, path, /):
+    def readf(self, path: str, /):
         """
-        Выводит результат всей нагрузки на руки, пальцы, штрафы
+        Выводит нагрузку на руки, пальцы для всего файла
         """
         pen_counter = 0
         fingers_count = [0] * 8
@@ -98,7 +105,7 @@ class Layout():
                 pc, fc, ac = self.pen_count(line)
                 pen_counter += pc
                 fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
-                arms_count = [x + y for x, y in zip(arms_count, ac)] 
+                arms_count = [x + y for x, y in zip(arms_count, ac)]
         filename = path.split('/')[-1]
         print(f'Нагрузка на пальцы: {fingers_count}')
         print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}, ' +
@@ -107,10 +114,10 @@ class Layout():
               f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
         print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
 
-    def lexeme(self, path, /):
+    def lexeme(self, path: str, /):
         """
         Прогоняет программу по файлу с лексемами и записывает
-         штрафы в файл
+        штрафы для каждой в новый файл result.txt
         """
         with open(path) as f:
             text = f.readlines()
@@ -122,56 +129,74 @@ class Layout():
 
     def pen_count(self, line: str, /):
         """
-        Считает штрафы для рук и пальцев
+        Считает штрафы для рук и пальцев в строке
         """
-        arm_count = [0] * 3 # левая, двуручие, правая
+        arm_count = [0] * 3  # левая, двуручие, правая
         pen_counter = 0
         fingers_count = [0] * 8  # 0 - 7 левый мизинец - правый
         for ch in line:
             if not ch.isalpha():
                 continue
-            k = self.keys.get(ch.lower(), 0)
-            if k == 0:
-                continue
-            else:
-                if ch.isupper():
-                    pen_counter += 1  # shift
-                    if k.arm == 'l':
-                        fingers_count[7] += 1
-                    else:
-                        fingers_count[0] += 1
-                if k.alt:
-                    pen_counter += 1  # alt
-                pen_counter += k.penalty
-                if k.arm == 'l':
-                    match k.finger:
-                        case 'f5':
-                            fingers_count[0] += k.penalty
-                        case 'f4':
-                            fingers_count[1] += k.penalty
-                        case 'f3':
-                            fingers_count[2] += k.penalty
-                        case 'f2':
-                            fingers_count[3] += k.penalty
-                else:
-                    match k.finger:
-                        case 'f2':
-                            fingers_count[4] += k.penalty
-                        case 'f3':
-                            fingers_count[5] += k.penalty
-                        case 'f4':
-                            fingers_count[6] += k.penalty
-                        case 'f5':
-                            fingers_count[7] += k.penalty
 
-                if ch.isupper() and k.alt:
-                    arm_count[1] += 2 + k.penalty
-                if ch.isupper() or k.alt:
-                    arm_count[1] += 1 + k.penalty
+            k1 = self.keys.get(ch.lower(), 0)
+            k2 = self.alts.get(ch.lower(), 0)
+            if k1 == 0 and k2 == 0:
+                continue
+
+            # определение ближней клавиши
+            if k2 == 0:
+                k = k1
+            elif k1 == 0:
+                k = k2
+            elif k1.penalty >= k2.penalty:
+                k = k2
+            else:
+                k = k1
+
+            pen = k.penalty
+
+            if ch.isupper():
+                pen_counter += 1  # shift
+                if k.arm == 'l':
+                    fingers_count[7] += 1
                 else:
-                    if k.arm == 'l':
-                        arm_count[0] += k.penalty
-                    else:
-                        arm_count[2] += k.penalty
+                    fingers_count[0] += 1
+                arm_count[1] += 1
+
+            if k.alt:
+                pen_counter += 1  # alt
+                if k.arm == 'l':
+                    arm_count[1] += 1
+                else:
+                    arm_count[2] += 1 + pen
+            pen_counter += pen
+
+            if k.arm == 'l':
+                match k.finger:
+                    case 'f5':
+                        fingers_count[0] += pen
+                    case 'f4':
+                        fingers_count[1] += pen
+                    case 'f3':
+                        fingers_count[2] += pen
+                    case 'f2':
+                        fingers_count[3] += pen
+            else:
+                match k.finger:
+                    case 'f2':
+                        fingers_count[4] += pen
+                    case 'f3':
+                        fingers_count[5] += pen
+                    case 'f4':
+                        fingers_count[6] += pen
+                    case 'f5':
+                        fingers_count[7] += pen
+
+            if ch.isupper() or k.alt:
+                arm_count[1] += pen
+            elif k.arm == 'l':
+                arm_count[0] += pen
+            else:
+                arm_count[2] += pen
 
         return (pen_counter, fingers_count, arm_count)
