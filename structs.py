@@ -1,3 +1,6 @@
+import csv
+
+
 class Key():
     """
     Класс Key в зависимости от кода клавиши
@@ -101,11 +104,11 @@ class Layout():
         arms_count = [0] * 3
         with open(path) as f:
             text = f.readlines()
-            for line in text:
-                pc, fc, ac = self.pen_count(line)
-                pen_counter += pc
-                fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
-                arms_count = [x + y for x, y in zip(arms_count, ac)]
+        for line in text:
+            pc, fc, ac = self.pen_count(line)
+            pen_counter += pc
+            fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
+            arms_count = [x + y for x, y in zip(arms_count, ac)]
         filename = path.split('/')[-1]
         print(f'Нагрузка на пальцы: {fingers_count}')
         print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}, ' +
@@ -119,13 +122,34 @@ class Layout():
         Прогоняет программу по файлу с лексемами и записывает
         штрафы для каждой в новый файл result.txt
         """
-        with open(path) as f:
-            text = f.readlines()
-        with open("result.txt", 'w') as f:
-            for line in text:
-                penalty = self.pen_count(line)[0]
-                f.write(line[:-1] + ' ' + str(penalty) + '\n')
-        print("Штрафы записаны в файл result.txt")
+        ext = path.split('/')[-1].split('.')[-1]
+        if not (ext == 'csv'):
+            with open(path) as f:
+                text = f.readlines()
+            with open("result.txt", 'w') as f:
+                for line in text:
+                    penalty = self.pen_count(line)[0]
+                    f.write(line[:-1] + ' ' + str(penalty) + '\n')
+            print("Штрафы записаны в файл result.txt")
+            return
+        with open(path, newline='') as f:
+            csv_r = csv.reader(f)
+            rows = []
+            for row in csv_r:
+                rows.append(row)
+            for i in range(len(rows)):
+                for item in rows[i]:
+                    print(item)
+                    if item.isnumeric():
+                        continue
+                    pen = self.pen_count(item)[0]
+                    rows[i].append(pen)
+                    print(rows[i])
+                    break
+        with open("result.csv", 'w', newline='') as f:
+            csv_w = csv.writer(f)
+            csv_w.writerows(rows)
+        print("Штрафы записаны в файл result.csv")
 
     def pen_count(self, line: str, /):
         """
