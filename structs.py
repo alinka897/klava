@@ -116,7 +116,7 @@ class Layout():
         print(f'Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, ' +
               f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
         print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
-        return arms_count
+        return (pen_counter, fingers_count, arms_count)
 
     def lexeme(self, path: str, /):
         """
@@ -140,12 +140,10 @@ class Layout():
                 rows.append(row)
             for i in range(len(rows)):
                 for item in rows[i]:
-                    print(item)
                     if item.isnumeric():
                         continue
                     pen = self.pen_count(item)[0]
                     rows[i].append(pen)
-                    print(rows[i])
                     break
         with open("result.csv", 'w', newline='') as f:
             csv_w = csv.writer(f)
