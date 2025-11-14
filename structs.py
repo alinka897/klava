@@ -116,6 +116,7 @@ class Layout():
         print(f'Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, ' +
               f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
         print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
+        return arms_count
 
     def lexeme(self, path: str, /):
         """

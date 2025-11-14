@@ -1,5 +1,5 @@
 import structs as s
-# import visual as v
+import visual as v
 
 
 def main():
@@ -33,7 +33,8 @@ def main():
     match n:
         case 1:
             path = input("Введите путь к файлу: ")
-            layout.readf(path)
+            arms = layout.readf(path)
+            v.arm_pie(arms)
         case 2:
             path = input("Введите путь к файлу: ")
             layout.lexeme(path)
