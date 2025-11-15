@@ -67,7 +67,7 @@ class Layout():
     с соответствующим экземпляром класса Key
     """
     def __init__(self, /, tr='ё1234567890-=', ur='йцукенгшщзхъ\\',
-                 hr='фывапролджэ', lr='ячсмитьбю.', **alts):
+                 hr='фывапролджэ', lr='ячсмитьбю.', color='k', **alts):
         if not ([len(r) for r in (tr, ur, hr, lr)] == [13, 13, 11, 10]):
             print("Ряды введены неправильно")
             return
@@ -75,6 +75,7 @@ class Layout():
         self.ur = ur
         self.hr = hr
         self.lr = lr
+        self.color = color
         self.extract_keys(alts)
 
     def extract_keys(self, alts: dict):
@@ -110,12 +111,12 @@ class Layout():
             fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
             arms_count = [x + y for x, y in zip(arms_count, ac)]
         filename = path.split('/')[-1]
-        print(f'Нагрузка на пальцы: {fingers_count}')
-        print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}, ' +
-              f'правая - {sum(fingers_count[4:])}')
-        print(f'Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, ' +
-              f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
-        print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
+        # print(f'Нагрузка на пальцы: {fingers_count}')
+        # print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}, ' +
+        #      f'правая - {sum(fingers_count[4:])}')
+        # print(f'Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, ' +
+        #      f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
+        # print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
         return (pen_counter, fingers_count, arms_count)
 
     def lexeme(self, path: str, /):
