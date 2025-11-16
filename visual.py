@@ -3,15 +3,19 @@ import numpy as np
 import pandas
 import structs as s
 
-for_title = dict(fontsize=20, color='k', fontweight='bold')
+for_title = dict(fontsize=18, color='k', fontweight='bold')
 size = '14'
 
 
-def arm_pie(arms: list):
+def arm_pie(arms, name, ax=''):
     """
     Создание круговой диаграммы для рук (левая, правая, двуручие)
     """
-    fig, ax = plt.subplots()
+    if ax == '':
+        fig, ax = plt.subplots()
+        title = f"Нагрузка на руки в тексте\n{name}"
+    else:
+        title = f"\n{name}"
 
     def abs(pct, arms):
         absolute = int(np.round(pct/100. * np.sum(arms)))
@@ -23,17 +27,37 @@ def arm_pie(arms: list):
     wedges, texts, autotexts = ax.pie(filtr_arms, labels=filtr_lab,
                                       autopct=lambda pct: abs(pct, arms),
                                       textprops={'fontsize': size})
-    plt.setp(autotexts, size=14)
-    ax.set_title("Нагрузка на руки в тексте", **for_title)
+    plt.setp(autotexts, size=size)
 #    plt.legend(title=f"Всего штрафов: {sum(arms)}")
-    plt.text(0.9, 1.1, f'Всего штрафов: {sum(arms)}', fontsize=size,
+    ax.set_title(title, **for_title)
+    ax.text(0.9, 1.1, f'Всего штрафов: {sum(arms)}', fontsize=size,
              color='black', bbox=dict(boxstyle='round', facecolor='wheat',
              alpha=0.5))
-    plt.show()
+
+
+def arm_pies(l_arms, names):
+    col = round(len(l_arms) / 2)
+    fig, axs = plt.subplots(2, col)
+    
+    for i in 0, 1:
+        for j in range(col):
+            index = i*col + j
+            if col == 1:
+                arm_pie(l_arms[index], names[index],
+                        ax=axs[i]) 
+            else:
+                if index > (len(l_arms) - 1):
+                    fig.delaxes(axs[i, j]) 
+                    continue
+                arm_pie(l_arms[index], names[index],
+                        ax=axs[i, j]) 
+    plt.tight_layout()
 
 
 def fingers_bar(l_fingers, colors, names):
-
+    """
+    Создание столбчатых диаграмм для пальцев рук
+    """
     y = ['Мизинец л', 'Безымянный л', 'Средний л', 'Указательный л',
          'Указательный п', 'Средний п', 'Безымянный п', 'Мизинец п']
 
@@ -78,4 +102,3 @@ def fingers_bar(l_fingers, colors, names):
     ax.tick_params(axis='x', labelsize=size)
     ax.set_axisbelow(True)
     ax.grid(axis='x', ls='dashed')
-    plt.show()

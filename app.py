@@ -1,5 +1,6 @@
 import structs as s
 import visual as v
+import matplotlib.pyplot as plt
 
 
 def check_nums(n, *nums):
@@ -80,8 +81,9 @@ def main():
                 if n == 1:
                     path = input("\nВведите путь к файлу: ")
                     penalty, fingers, arms = layout.readf(path)
-                    v.arm_pie(arms)
+                    v.arm_pie(arms, layout.name)
                     v.fingers_bar(fingers, layout.color, layout.name)
+                    plt.show()
                 else:
                     path = input("\nВведите путь к файлу: ")
                     layout.lexeme(path)
@@ -92,6 +94,9 @@ def main():
                           "5) ANT\n6) Зубачев\n7) Вызов\n")
                     lo_nums = [int(i) for i in input("Введите номера" +
                                " нужных раскладок(через пробел): ").split()]
+                    if len(lo_nums) == 1:
+                        print("\nВведите еще одну цифру!")
+                        continue
                     if all(check_nums(i, *range(1, 8)) for i in lo_nums):
                         break
                 los = []
@@ -99,13 +104,18 @@ def main():
                     los.append(choose_l(num))
                 path = input("\nВведите путь к файлу: ")
                 l_fingers = []
+                l_arms = []
                 colors = []
                 names = []
                 for lo in los:
-                    l_fingers.append(lo.readf(path)[1])
+                    p, f, a = lo.readf(path)
+                    l_fingers.append(f)
+                    l_arms.append(a)
                     colors.append(lo.color)
                     names.append(lo.name)
+                v.arm_pies(l_arms, names)
                 v.fingers_bar(l_fingers, colors, names)
+                plt.show()
         except ValueError:
             print("\nВведите число!")
 
