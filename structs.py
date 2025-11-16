@@ -67,7 +67,7 @@ class Layout():
     с соответствующим экземпляром класса Key
     """
     def __init__(self, /, tr='ё1234567890-=', ur='йцукенгшщзхъ\\',
-                 hr='фывапролджэ', lr='ячсмитьбю.', color='k', **alts):
+                 hr='фывапролджэ', lr='ячсмитьбю.', color='k', name='', **alts):
         if not ([len(r) for r in (tr, ur, hr, lr)] == [13, 13, 11, 10]):
             print("Ряды введены неправильно")
             return
@@ -75,6 +75,7 @@ class Layout():
         self.ur = ur
         self.hr = hr
         self.lr = lr
+        self.name = name
         self.color = color
         self.extract_keys(alts)
 
@@ -111,12 +112,12 @@ class Layout():
             fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
             arms_count = [x + y for x, y in zip(arms_count, ac)]
         filename = path.split('/')[-1]
-        # print(f'Нагрузка на пальцы: {fingers_count}')
-        # print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}, ' +
-        #      f'правая - {sum(fingers_count[4:])}')
-        # print(f'Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, ' +
-        #      f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
-        # print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
+#        print(f'Нагрузка на пальцы: {fingers_count}')
+#        print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}, ' +
+#              f'правая - {sum(fingers_count[4:])}')
+#        print(f'Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, ' +
+#              f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
+#        print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
         return (pen_counter, fingers_count, arms_count)
 
     def lexeme(self, path: str, /):
@@ -192,35 +193,18 @@ class Layout():
                 if k.arm == 'l':
                     arm_count[1] += 1
                 else:
-                    arm_count[2] += 1 + pen
+                    arm_count[2] += 1
             pen_counter += pen
 
-            if k.arm == 'l':
-                match k.finger:
-                    case 'f5':
-                        fingers_count[0] += pen
-                    case 'f4':
-                        fingers_count[1] += pen
-                    case 'f3':
-                        fingers_count[2] += pen
-                    case 'f2':
-                        fingers_count[3] += pen
-            else:
-                match k.finger:
-                    case 'f2':
-                        fingers_count[4] += pen
-                    case 'f3':
-                        fingers_count[5] += pen
-                    case 'f4':
-                        fingers_count[6] += pen
-                    case 'f5':
-                        fingers_count[7] += pen
+            d = dict(zip(['lf5', 'lf4', 'lf3', 'lf2', 'rf2',
+                           'rf3', 'rf4', 'rf5'], range(8)))
+            fingers_count[d[k.arm + k.finger]] += pen  
 
-            if ch.isupper() or k.alt:
+            if ch.isupper() or (k.alt and k.arm == 'l'):
                 arm_count[1] += pen
-            elif k.arm == 'l':
-                arm_count[0] += pen
-            else:
+            elif k.arm == 'r' or (k.alt and k.arm == 'r'):
                 arm_count[2] += pen
+            else:
+                arm_count[0] += pen
 
         return (pen_counter, fingers_count, arm_count)
