@@ -208,3 +208,111 @@ class Layout():
                 arm_count[0] += pen
 
         return (pen_counter, fingers_count, arm_count)
+
+
+    def perebor(self, word: str , /):
+        """
+        Анализ слова по путям пальцев
+        """
+        # кол-во удобных двухсимвольных, трех-... переборов
+        if not (word.isalpha()):
+            return
+        chr_count = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0]*4))
+        chl_count = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0]*4))
+        conv = '' # удобство набития слова
+        conv_ch = '' # удобство набития символов 
+        streak = 1 # сколько символов в удобном переборе 
+        two_arms = False
+        for i in range(len(word) - 1):
+            k1 = self.keys.get(word[i], 0)
+            k2 = self.keys.get(word[i + 1], 0)
+            if k1 == 0 or k2 == 0:
+                return
+            arm = k1.arm
+            # руки меняются -> неудобство, пред сост сохраняем в словарь
+            if arm != k2.arm:
+                # cлово бьется двумя руками
+                two_arms = True
+                # добавляем только удобные переборы
+                if conv_ch == 'good':
+                    if arm == 'r':
+                        chr_count[f'ch{streak}'] += 1
+                    else:
+                        chl_count[f'ch{streak}'] += 1
+                streak = 1
+                conv_ch = ''
+                conv = 'bad' # слово неудобно
+
+            # переход на другой ряд на той же стороне
+            elif k1.row != k2.row:
+                # для сравнения проекция на хоум ряд
+                codes = [0] * 2
+                i = 0 
+                for k in (k1, k2):
+                    if k.row == 'hr':
+                        codes[i] = k.code
+                    elif k.row == 'ur':
+                        codes[i] = k.code + 14
+                    elif k.row == 'lr':
+                        codes[i] = k.code - 14
+                    else:
+                        codes[i] = k.code + 2 * 14
+                    i += 1
+
+                if arm == 'r':
+                    if conv_ch == 'good':
+                        chr_count[f'ch{streak}'] += 1
+                        conv_ch = ''
+                    if (codes[0] - codes[1]) > 0: # если направление сохранено
+                        conv = 'ok'
+                    else:
+                        conv = 'bad'
+                else:
+                    if (codes[0] - codes[1]) < 0:
+                        conv = 'ok' # частично удобно
+                    else:
+                        conv = 'bad'
+                    if conv_ch == 'good':
+                        chl_count[f'ch{streak}'] += 1
+                        conv_ch = ''
+                streak = 1
+
+            # удобная последовательность
+            elif arm == 'l':
+                if k1.code <= k2.code:
+                    streak += 1
+                    conv_ch = 'good'
+                else:
+                    if conv_ch == 'good':
+                        chl_count[f'ch{streak}'] += 1
+                        conv_ch = ''
+                    conv = 'bad'
+                    streak = 1
+            else:
+                if k1.code >= k2.code:
+                    streak += 1
+                    conv_ch = 'good'
+                else:
+                    if conv_ch == 'good':
+                        chr_count[f'ch{streak}'] += 1
+                        conv_ch = ''
+                    conv = 'bad'
+                    streak = 1
+        if conv == '':
+            conv = 'good'
+        # последняя последовательно не обработанная в цикле
+        if streak != 1:
+            if arm == 'r':
+                chr_count[f'ch{streak}'] += 1
+            else:
+                chl_count[f'ch{streak}'] += 1
+        if two_arms:
+            arm = 'both'
+        return (arm, conv, chl_count, chr_count) 
+
+    def per_readf(path: str, /):
+        """
+        Анализ текста по путям пальцев
+        """
+        with open(path) as f:
+            text = f.readlines()
