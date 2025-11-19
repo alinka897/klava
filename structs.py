@@ -1,4 +1,6 @@
 import csv
+from string import punctuation as punc
+from collections import Counter as Counter
 
 
 class Key():
@@ -97,7 +99,7 @@ class Layout():
         self.keys = keys
         self.alts = alt_keys
 
-    def readf(self, path: str, /):
+    def readf(self, path: str, /) -> tuple:
         """
         Выводит нагрузку на руки, пальцы для всего файла
         """
@@ -152,7 +154,7 @@ class Layout():
             csv_w.writerows(rows)
         print("Штрафы записаны в файл result.csv")
 
-    def pen_count(self, line: str, /):
+    def pen_count(self, line: str, /) -> tuple:
         """
         Считает штрафы для рук и пальцев в строке
         """
@@ -210,22 +212,43 @@ class Layout():
         return (pen_counter, fingers_count, arm_count)
 
 
-    def perebor(self, word: str , /):
+    def perebor(self, word: str , /) -> tuple | None:
         """
         Анализ слова по путям пальцев
         """
-        # кол-во удобных двухсимвольных, трех-... переборов
-        if not (word.isalpha()):
+        word = word.strip(punc)
+        if len(word) <= 1:
             return
+        # кол-во удобных двухсимвольных, трех-... переборов
         chr_count = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0]*4))
         chl_count = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0]*4))
         conv = '' # удобство набития слова
         conv_ch = '' # удобство набития символов 
         streak = 1 # сколько символов в удобном переборе 
         two_arms = False
+        arm = ''
         for i in range(len(word) - 1):
+            # определяем 1 клавишу
             k1 = self.keys.get(word[i], 0)
+            k1a = self.alts.get(word[i], 0)
+            if k1 == 0 and k1a == 0:
+                return
+            if k1 != 0 and k1a != 0:
+                if k1a.pen < k1.pen:
+                    k1 = k1a
+            if k1 == 0 and k1a != 0:
+                k1 = k1a
+            # вторую
             k2 = self.keys.get(word[i + 1], 0)
+            k2a = self.alts.get(word[i + 1], 0)
+            if k2 == 0 and k2a == 0:
+                return
+            if k2 != 0 and k2a != 0:
+                if k2a.pen < k2.pen:
+                    k2 = k2a
+            if k2 == 0 and k2a != 0:
+                k2 = k2a
+
             if k1 == 0 or k2 == 0:
                 return
             arm = k1.arm
@@ -310,9 +333,27 @@ class Layout():
             arm = 'both'
         return (arm, conv, chl_count, chr_count) 
 
-    def per_readf(path: str, /):
+    def per_readf(self, path: str, /) -> tuple:
         """
         Анализ текста по путям пальцев
         """
+        arms = Counter() 
+        convs = Counter()
+        l_ch = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0] * 4))
+        r_ch = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0] * 4))
         with open(path) as f:
             text = f.readlines()
+        for line in text:
+            for word in line.split():
+                if word.isdigit() or word.isalnum():
+                    continue
+                ret = self.perebor(word)
+                if ret is None:
+                    continue
+                arm, conv, chl_cnt, chr_cnt = ret
+                arms[arm] += 1
+                convs[conv] += 1
+                for k in chl_cnt.keys():
+                    l_ch[k] += chl_cnt[k]
+                    r_ch[k] += chr_cnt[k]
+        return (arms, convs, l_ch, r_ch)

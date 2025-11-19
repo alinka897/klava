@@ -57,6 +57,12 @@ def main():
     while True:
         try:
             while True:
+                n = int(input("\nКак считаем штрафы?\n1) Статически" +
+                              "\n2) Динамически\n"))
+                if check_nums(n, 1, 2):
+                    break
+            pen_mode = n
+            while True:
                 n = int(input("\nЧто хотим сделать?\n1) Проанализировать" +
                               " одну раскладку\n2) Сравнить несколько" +
                               " раскладок\n"))
@@ -80,13 +86,21 @@ def main():
                     
                 if n == 1:
                     path = input("\nВведите путь к файлу: ")
-                    penalty, fingers, arms = layout.readf(path)
-                    v.arm_pie(arms, layout.name)
-                    v.fingers_bar(fingers, layout.color, layout.name)
-                    plt.show()
+                    
+                    if pen_mode == 1:
+                        penalty, fingers, arms = layout.readf(path)
+                        v.arm_pie(arms, layout.name)
+                        v.fingers_bar(fingers, layout.color, layout.name)
+                        plt.show()
+                    else:
+                        print(layout.per_readf(path))
+
                 else:
                     path = input("\nВведите путь к файлу: ")
-                    layout.lexeme(path)
+                    if pen_mode == 1:
+                        layout.lexeme(path)
+                    else:
+                        layout.per_readf(path)
             else:
                 while True:
                     print("\n1) ЙЦУКЕН\n" +
@@ -102,20 +116,32 @@ def main():
                 los = []
                 for num in lo_nums:
                     los.append(choose_l(num))
+
                 path = input("\nВведите путь к файлу: ")
-                l_fingers = []
-                l_arms = []
-                colors = []
-                names = []
-                for lo in los:
-                    p, f, a = lo.readf(path)
-                    l_fingers.append(f)
-                    l_arms.append(a)
-                    colors.append(lo.color)
-                    names.append(lo.name)
-                v.arm_pies(l_arms, names)
-                v.fingers_bar(l_fingers, colors, names)
-                plt.show()
+                if pen_mode == 1:
+                    l_fingers = []
+                    l_arms = []
+                    colors = []
+                    names = []
+                    for lo in los:
+                        p, f, a = lo.readf(path)
+                        l_fingers.append(f)
+                        l_arms.append(a)
+                        colors.append(lo.color)
+                        names.append(lo.name)
+                    v.arm_pies(l_arms, names)
+                    v.fingers_bar(l_fingers, colors, names)
+                    plt.show()
+                else:
+                    colors = [lo.color for lo in los]
+                    names = [lo.name for lo in los]
+                    rets = [lo.per_readf(path) for lo in los]
+                    l_arms = [ret[0] for ret in rets]
+                    l_convs = [ret[1] for ret in rets]
+                    l_l = [ret[2] for ret in rets]
+                    l_r = [ret[3] for ret in rets]
+
+
         except ValueError:
             print("\nВведите число!")
 
