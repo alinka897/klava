@@ -3,6 +3,40 @@ import visual as v
 import matplotlib.pyplot as plt
 
 
+def show(layout, path: str, /, static=True, mult=False, linemode=False):
+    """
+    Отображение графиков в зависимости от параметров
+    """
+    if not mult:
+        if linemode:
+            penalty, fingers, arms = layout.readf(path, linemode=True)
+        else:
+            if static:
+                penalty, fingers, arms = layout.readf(path)
+            else:
+                penalty, fingers, arms = layout.per_readf(path)
+        v.arm_pie(arms, layout.name)
+        v.fingers_bar(fingers, layout.color, layout.name)
+        plt.show()
+        return
+    los = layout
+    colors = [lo.color for lo in los]
+    names = [lo.name for lo in los]
+    if static:
+        rets = [lo.readf(path) for lo in los]
+        l_fingers = [ret[1] for ret in rets]
+        l_arms = [ret[2] for ret in rets]
+        v.arm_pies(l_arms, names)
+        v.fingers_bar(l_fingers, colors, names)
+        plt.show()
+        return
+    rets = [lo.per_readf(path) for lo in los]
+    l_arms = [ret[0] for ret in rets]
+    l_convs = [ret[1] for ret in rets]
+    l_l = [ret[2] for ret in rets]
+    l_r = [ret[3] for ret in rets]
+    
+
 def check_nums(n, *nums):
     if any(n == num for num in nums):
         return 1
@@ -61,7 +95,7 @@ def main():
                               "\n2) Динамически\n"))
                 if check_nums(n, 1, 2):
                     break
-            pen_mode = n
+            static = True if n == 1 else False
             while True:
                 n = int(input("\nЧто хотим сделать?\n1) Проанализировать" +
                               " одну раскладку\n2) Сравнить несколько" +
@@ -87,18 +121,15 @@ def main():
                 if n == 1:
                     path = input("\nВведите путь к файлу: ")
                     
-                    if pen_mode == 1:
-                        penalty, fingers, arms = layout.readf(path)
-                        v.arm_pie(arms, layout.name)
-                        v.fingers_bar(fingers, layout.color, layout.name)
-                        plt.show()
+                    if static:
+                        show(layout, path)
                     else:
                         print(layout.per_readf(path))
 
                 else:
                     path = input("\nВведите путь к файлу: ")
-                    if pen_mode == 1:
-                        layout.lexeme(path)
+                    if static:
+                        show(layout, path, linemode=True)
                     else:
                         layout.per_readf(path)
             else:
@@ -118,29 +149,7 @@ def main():
                     los.append(choose_l(num))
 
                 path = input("\nВведите путь к файлу: ")
-                if pen_mode == 1:
-                    l_fingers = []
-                    l_arms = []
-                    colors = []
-                    names = []
-                    for lo in los:
-                        p, f, a = lo.readf(path)
-                        l_fingers.append(f)
-                        l_arms.append(a)
-                        colors.append(lo.color)
-                        names.append(lo.name)
-                    v.arm_pies(l_arms, names)
-                    v.fingers_bar(l_fingers, colors, names)
-                    plt.show()
-                else:
-                    colors = [lo.color for lo in los]
-                    names = [lo.name for lo in los]
-                    rets = [lo.per_readf(path) for lo in los]
-                    l_arms = [ret[0] for ret in rets]
-                    l_convs = [ret[1] for ret in rets]
-                    l_l = [ret[2] for ret in rets]
-                    l_r = [ret[3] for ret in rets]
-
+                show(los, path, mult=True, static=static)
 
         except ValueError:
             print("\nВведите число!")

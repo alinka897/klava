@@ -1,6 +1,6 @@
 import csv
-from string import punctuation as punc
 from collections import Counter as Counter
+from string import punctuation as punc
 
 
 class Key():
@@ -99,44 +99,31 @@ class Layout():
         self.keys = keys
         self.alts = alt_keys
 
-    def readf(self, path: str, /) -> tuple:
+    def readf(self, path: str, /, linemode=False) -> tuple:
         """
-        Выводит нагрузку на руки, пальцы для всего файла
+        Считает нагрузку на руки, пальцы для всего файла
         """
+        ext = path.split('/')[-1].split('.')[-1]
         pen_counter = 0
         fingers_count = [0] * 8
         arms_count = [0] * 3
-        with open(path) as f:
-            text = f.readlines()
-        for line in text:
-            pc, fc, ac = self.pen_count(line)
-            pen_counter += pc
-            fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
-            arms_count = [x + y for x, y in zip(arms_count, ac)]
-        filename = path.split('/')[-1]
-#        print(f'Нагрузка на пальцы: {fingers_count}')
-#        print(f'Нагрузка на руки: левая - {sum(fingers_count[:4])}, ' +
-#              f'правая - {sum(fingers_count[4:])}')
-#        print(f'Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, ' +
-#              f'двуручие - {arms_count[1]}, правая - {arms_count[2]}')
-#        print(f'Кол-во штрафов в файле {filename}: {pen_counter}')
-        return (pen_counter, fingers_count, arms_count)
-
-    def lexeme(self, path: str, /):
-        """
-        Прогоняет программу по файлу с лексемами и записывает
-        штрафы для каждой в новый файл result.txt
-        """
-        ext = path.split('/')[-1].split('.')[-1]
-        if not (ext == 'csv'):
+        lines = []
+        if ext != 'csv':
             with open(path) as f:
                 text = f.readlines()
-            with open("result.txt", 'w') as f:
-                for line in text:
-                    penalty = self.pen_count(line)[0]
-                    f.write(line[:-1] + ' ' + str(penalty) + '\n')
-            print("Штрафы записаны в файл result.txt")
-            return
+            for line in text:
+                pc, fc, ac = self.pen_count(line)
+                pen_counter += pc
+                fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
+                arms_count = [x + y for x, y in zip(arms_count, ac)]
+                if linemode:
+                    lines.append(line[:-1] + ' ' + str(pc) + '\n')
+            if linemode:
+                with open("result.txt", 'w') as f:
+                    f.write(''.join(lines))
+                print("Штрафы записаны в файл result.txt")
+            return (pen_counter, fingers_count, arms_count)
+
         with open(path, newline='') as f:
             csv_r = csv.reader(f)
             rows = []
@@ -146,13 +133,18 @@ class Layout():
                 for item in rows[i]:
                     if item.isnumeric():
                         continue
-                    pen = self.pen_count(item)[0]
-                    rows[i].append(pen)
+                    pc, fc, ac = self.pen_count(item)
+                    pen_counter += pc
+                    fingers_count = [fc[i] + fingers_count[i] for i in range(8)]
+                    arms_count = [ac[i] + arms_count[i] for i in range(3)]
+                    rows[i].append(pc)
                     break
-        with open("result.csv", 'w', newline='') as f:
-            csv_w = csv.writer(f)
-            csv_w.writerows(rows)
-        print("Штрафы записаны в файл result.csv")
+        if linemode:
+            with open("result.csv", 'w', newline='') as f:
+                csv_w = csv.writer(f)
+                csv_w.writerows(rows)
+            print("Штрафы записаны в файл result.csv")
+        return (pen_counter, fingers_count, arms_count)
 
     def pen_count(self, line: str, /) -> tuple:
         """
