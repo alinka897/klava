@@ -3,11 +3,12 @@ import visual as v
 import matplotlib.pyplot as plt
 
 
-def show(layout, path: str, /, static=True, mult=False, linemode=False):
+def show(layout: list | s.Layout, path: str, /, static=True,
+         linemode=False) -> None:
     """
     Отображение графиков в зависимости от параметров
     """
-    if not mult:
+    if isinstance(layout, s.Layout):
         if linemode:
             penalty, fingers, arms = layout.readf(path, linemode=True)
         else:
@@ -37,12 +38,20 @@ def show(layout, path: str, /, static=True, mult=False, linemode=False):
     l_r = [ret[3] for ret in rets]
     
 
-def check_nums(n, *nums):
+def check_nums(n, *nums) -> None:
     if any(n == num for num in nums):
         return 1
     else:
         print("\nВведите цифру из меню!")
         return 0
+
+
+def ask(text: str, *nums) -> int:
+    while True:
+        n = int(input(text))
+        if check_nums(n, *nums):
+            break
+    return n
 
 
 def choose_l(num: int) -> s.Layout:
@@ -87,36 +96,27 @@ def choose_l(num: int) -> s.Layout:
     return layout
 
 
-def main():
+def main() -> None:
     while True:
         try:
-            while True:
-                n = int(input("\nКак считаем штрафы?\n1) Статически" +
-                              "\n2) Динамически\n"))
-                if check_nums(n, 1, 2):
-                    break
+            text = "\nКак считаем штрафы?\n1) Статически\n2) Динамически\n"
+            n = ask(text, 1, 2)
             static = True if n == 1 else False
-            while True:
-                n = int(input("\nЧто хотим сделать?\n1) Проанализировать" +
-                              " одну раскладку\n2) Сравнить несколько" +
-                              " раскладок\n"))
-                if check_nums(n, 1, 2):
-                    break
+            text = ("\nЧто хотим сделать?\n1) Проанализировать" +
+                    " одну раскладку\n2) Сравнить несколько" +
+                    " раскладок\n")
+            n = ask(text, 1, 2)
             if n == 1:
-                while True:
-                    n = int(input("\nВыберете раскладку:\n1) ЙЦУКЕН\n" +
-                                  "2) Фонетическая\n3) Диктор\n" +
-                                  "4) Скоропись\n5) ANT\n6) Зубачев\n" +
-                                  "7) Вызов\n"))
-                    if check_nums(n, *range(1, 8)):
-                        break
+                text = ("\nВыберете раскладку:\n1) ЙЦУКЕН\n" +
+                        "2) Фонетическая\n3) Диктор\n" +
+                        "4) Скоропись\n5) ANT\n6) Зубачев\n" +
+                        "7) Вызов\n")
+                n = ask(text, *range(1, 8))
                 layout = choose_l(n)
-                while True:
-                    n = int(input("\nЧто хотим сделать?\n" +
-                                  "1) Прогнать через файл\n" +
-                                  "2) Штрафы построчно\n"))
-                    if check_nums(n, 1, 2):
-                        break
+                text = ("\nЧто хотим сделать?\n" +
+                       "1) Прогнать через файл\n" +
+                       "2) Штрафы построчно\n")
+                n = ask(text, 1, 2)
                     
                 if n == 1:
                     path = input("\nВведите путь к файлу: ")
@@ -137,8 +137,8 @@ def main():
                     print("\n1) ЙЦУКЕН\n" +
                           "2) Фонетическая\n3) Диктор\n4) Скоропись\n" +
                           "5) ANT\n6) Зубачев\n7) Вызов\n")
-                    lo_nums = [int(i) for i in input("Введите номера" +
-                               " нужных раскладок(через пробел): ").split()]
+                    lo_nums = set(int(i) for i in input("Введите номера" +
+                                  " нужных раскладок(через пробел): ").split())
                     if len(lo_nums) == 1:
                         print("\nВведите еще одну цифру!")
                         continue
@@ -149,7 +149,7 @@ def main():
                     los.append(choose_l(num))
 
                 path = input("\nВведите путь к файлу: ")
-                show(los, path, mult=True, static=static)
+                show(los, path, static=static)
 
         except ValueError:
             print("\nВведите число!")

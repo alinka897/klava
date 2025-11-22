@@ -1,7 +1,16 @@
 import csv
-from collections import Counter as Counter
+from time import time
 from string import punctuation as punc
 
+
+def timeit(func):
+    def wrapper(*args):
+        start = time()
+        result = func(*args)
+        end = time()
+        print(f"Выполнено за {end - start}")
+        return result
+    return wrapper
 
 class Key():
     """
@@ -92,61 +101,84 @@ class Layout():
                  list(zip(self.lr, range(44, 54))))
         keys = dict()
         alt_keys = dict()
-        for k in d.keys():
-            if k in alts.keys():
+        for k in d:
+            if k in alts:
                 alt_keys[alts[k]] = Key(d[k], alts[k], alt=True)
             keys[k] = Key(d[k], k)
         self.keys = keys
         self.alts = alt_keys
+
+    def writef(self, ext: str, data: list, /) -> None:
+        """
+        Запись в файл штрафов построчно
+        """
+        if ext != 'csv':
+            with open('result.txt', 'w') as f:
+                f.write(''.join(data))
+            print("Штрафы записаны в файл result.txt")
+            return
+        with open('result.csv', 'w', newline='') as f:
+            csv_w = csv.writer(f)
+            csv_w.writerows(data)
+            print("Штрафы записаны в файл result.csv")
 
     def readf(self, path: str, /, linemode=False) -> tuple:
         """
         Считает нагрузку на руки, пальцы для всего файла
         """
         ext = path.split('/')[-1].split('.')[-1]
-        pen_counter = 0
+        pen_count = 0
         fingers_count = [0] * 8
         arms_count = [0] * 3
         lines = []
         if ext != 'csv':
             with open(path) as f:
-                text = f.readlines()
-            for line in text:
-                pc, fc, ac = self.pen_count(line)
-                pen_counter += pc
-                fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
-                arms_count = [x + y for x, y in zip(arms_count, ac)]
-                if linemode:
-                    lines.append(line[:-1] + ' ' + str(pc) + '\n')
+                for line in f:
+                    pc, fc, ac = self.line_penalty_counter(line)
+                    pen_count += pc
+                    fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
+                    arms_count = [x + y for x, y in zip(arms_count, ac)]
+                    if linemode:
+                        lines.append(line[:-1] + ' ' + str(pc) + '\n')
             if linemode:
-                with open("result.txt", 'w') as f:
-                    f.write(''.join(lines))
-                print("Штрафы записаны в файл result.txt")
-            return (pen_counter, fingers_count, arms_count)
+                self.writef(ext, lines)
+            return (pen_count, fingers_count, arms_count)
 
         with open(path, newline='') as f:
             csv_r = csv.reader(f)
             rows = []
             for row in csv_r:
-                rows.append(row)
-            for i in range(len(rows)):
-                for item in rows[i]:
+                for item in row:
                     if item.isnumeric():
                         continue
-                    pc, fc, ac = self.pen_count(item)
-                    pen_counter += pc
+                    pc, fc, ac = self.line_penalty_counter(item)
+                    pen_count += pc
                     fingers_count = [fc[i] + fingers_count[i] for i in range(8)]
                     arms_count = [ac[i] + arms_count[i] for i in range(3)]
-                    rows[i].append(pc)
+                    row.append(pc)
+                    rows.append(row)
                     break
         if linemode:
-            with open("result.csv", 'w', newline='') as f:
-                csv_w = csv.writer(f)
-                csv_w.writerows(rows)
-            print("Штрафы записаны в файл result.csv")
-        return (pen_counter, fingers_count, arms_count)
+            self.writef(ext, rows)
+        return (pen_count, fingers_count, arms_count)
 
-    def pen_count(self, line: str, /) -> tuple:
+    def choose_key(self, ch: str, /) -> Key | None:
+        """
+        Выбор клавиши альтовой или обычной
+        """
+        k1 = self.keys.get(ch.lower(), 0)
+        k2 = self.alts.get(ch.lower(), 0)
+        # определение ближней клавиши
+        if k1 == 0 and k2 == 0:
+            return
+        elif k1 != 0 and k2 != 0:
+            if k2.penalty < k1.penalty:
+                k1 = k2
+        elif k1 == 0 and k2 != 0:
+            k1 = k2
+        return k1
+
+    def line_penalty_counter(self, line: str, /) -> tuple:
         """
         Считает штрафы для рук и пальцев в строке
         """
@@ -157,21 +189,9 @@ class Layout():
             if not ch.isalpha():
                 continue
 
-            k1 = self.keys.get(ch.lower(), 0)
-            k2 = self.alts.get(ch.lower(), 0)
-            if k1 == 0 and k2 == 0:
+            k = self.choose_key(ch)
+            if k is None:
                 continue
-
-            # определение ближней клавиши
-            if k2 == 0:
-                k = k1
-            elif k1 == 0:
-                k = k2
-            elif k1.penalty >= k2.penalty:
-                k = k2
-            else:
-                k = k1
-
             pen = k.penalty
 
             if ch.isupper():
@@ -190,8 +210,8 @@ class Layout():
                     arm_count[2] += 1
             pen_counter += pen
 
-            d = dict(zip(['lf5', 'lf4', 'lf3', 'lf2', 'rf2',
-                           'rf3', 'rf4', 'rf5'], range(8)))
+            d = dict(zip('lf5 lf4 lf3 lf2 rf2 rf3 rf4 rf5'.split(),
+                         range(8)))
             fingers_count[d[k.arm + k.finger]] += pen  
 
             if ch.isupper() or (k.alt and k.arm == 'l'):
@@ -212,37 +232,22 @@ class Layout():
         if len(word) <= 1:
             return
         # кол-во удобных двухсимвольных, трех-... переборов
-        chr_count = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0]*4))
-        chl_count = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0]*4))
+        chr_count = dict(ch2=0, ch3=0, ch4=0, ch5=0)
+        chl_count = dict(ch2=0,ch3=0, ch4=0, ch5=0)
         conv = '' # удобство набития слова
         conv_ch = '' # удобство набития символов 
         streak = 1 # сколько символов в удобном переборе 
         two_arms = False
         arm = ''
         for i in range(len(word) - 1):
-            # определяем 1 клавишу
-            k1 = self.keys.get(word[i], 0)
-            k1a = self.alts.get(word[i], 0)
-            if k1 == 0 and k1a == 0:
-                return
-            if k1 != 0 and k1a != 0:
-                if k1a.pen < k1.pen:
-                    k1 = k1a
-            if k1 == 0 and k1a != 0:
-                k1 = k1a
-            # вторую
-            k2 = self.keys.get(word[i + 1], 0)
-            k2a = self.alts.get(word[i + 1], 0)
-            if k2 == 0 and k2a == 0:
-                return
-            if k2 != 0 and k2a != 0:
-                if k2a.pen < k2.pen:
-                    k2 = k2a
-            if k2 == 0 and k2a != 0:
-                k2 = k2a
 
-            if k1 == 0 or k2 == 0:
+            k1 = self.choose_key(word[i])
+            if k1 is None:
                 return
+            k2 = self.choose_key(word[i + 1])
+            if k2 is None:
+                return
+
             arm = k1.arm
             # руки меняются -> неудобство, пред сост сохраняем в словарь
             if arm != k2.arm:
@@ -329,10 +334,10 @@ class Layout():
         """
         Анализ текста по путям пальцев
         """
-        arms = Counter() 
-        convs = Counter()
-        l_ch = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0] * 4))
-        r_ch = dict(zip(['ch2', 'ch3', 'ch4', 'ch5'], [0] * 4))
+        arms = dict(r=0, both=0, l=0) 
+        convs = dict(good=0, bad=0, ok=0)
+        l_ch = dict(ch2=0, ch3=0, ch4=0, ch5=0)
+        r_ch = dict(ch2=0,ch3=0, ch4=0, ch5=0)
         with open(path) as f:
             text = f.readlines()
         for line in text:
