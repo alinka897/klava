@@ -8,16 +8,21 @@ def show(layout: list | s.Layout, path: str, /, static=True,
     """
     Отображение графиков в зависимости от параметров
     """
+    title = "Нагрузка на пальцы в тексте" 
+    y = ['Мизинец л', 'Безымянный л', 'Средний л', 'Указательный л',
+         'Указательный п', 'Средний п', 'Безымянный п', 'Мизинец п']
     if isinstance(layout, s.Layout):
-        if linemode:
-            penalty, fingers, arms = layout.readf(path, linemode=True)
+        if static:
+            penalty, fingers, arms = layout.readf(path, linemode=linemode)
+            v.hbars(fingers, layout.color, layout.name, y, title)
         else:
-            if static:
-                penalty, fingers, arms = layout.readf(path)
-            else:
-                penalty, fingers, arms = layout.per_readf(path)
+            y = ['2 символа', '3 символа', '4 символа', '5 символов']
+            arms, convs, l_ch, r_ch = layout.per_readf(path, linemode=linemode)
+            title = "Удобные последовательности. Левая рука"
+            v.hbars(l_ch, layout.color, layout.name, y, title)
+            title = "Удобные последовательности. Правая рука"
+            v.hbars(r_ch, layout.color, layout.name, y, title)
         v.arm_pie(arms, layout.name)
-        v.fingers_bar(fingers, layout.color, layout.name)
         plt.show()
         return
     los = layout
@@ -28,14 +33,22 @@ def show(layout: list | s.Layout, path: str, /, static=True,
         l_fingers = [ret[1] for ret in rets]
         l_arms = [ret[2] for ret in rets]
         v.arm_pies(l_arms, names)
-        v.fingers_bar(l_fingers, colors, names)
+        title = "Нагрузка на пальцы. Сравнение раскладок"
+        v.hbars(l_fingers, colors, names, y, title)
         plt.show()
         return
+    y = ['2 символа', '3 символа', '4 символа', '5 символов']
     rets = [lo.per_readf(path) for lo in los]
     l_arms = [ret[0] for ret in rets]
     l_convs = [ret[1] for ret in rets]
     l_l = [ret[2] for ret in rets]
     l_r = [ret[3] for ret in rets]
+    v.arm_pies(l_arms, names)
+    title = "Удобные последовательности. Левая рука"
+    v.hbars(l_l, colors, names, y, title) 
+    title = "Удобные последовательности. Правая рука"
+    v.hbars(l_r, colors, names, y, title)
+    plt.show()
     
 
 def check_nums(n, *nums) -> None:
@@ -120,18 +133,11 @@ def main() -> None:
                     
                 if n == 1:
                     path = input("\nВведите путь к файлу: ")
-                    
-                    if static:
-                        show(layout, path)
-                    else:
-                        print(layout.per_readf(path))
+                    show(layout, path, static=static)
 
                 else:
                     path = input("\nВведите путь к файлу: ")
-                    if static:
-                        show(layout, path, linemode=True)
-                    else:
-                        layout.per_readf(path)
+                    show(layout, path, linemode=True, static=static)
             else:
                 while True:
                     print("\n1) ЙЦУКЕН\n" +

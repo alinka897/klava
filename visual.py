@@ -7,7 +7,7 @@ for_title = dict(fontsize=18, color='k', fontweight='bold')
 size = '14'
 
 
-def arm_pie(arms, name, ax=''):
+def arm_pie(arms: list, name: list, /, ax=''):
     """
     Создание круговой диаграммы для рук (левая, правая, двуручие)
     """
@@ -28,7 +28,6 @@ def arm_pie(arms, name, ax=''):
                                       autopct=lambda pct: abs(pct, arms),
                                       textprops={'fontsize': size})
     plt.setp(autotexts, size=size)
-#    plt.legend(title=f"Всего штрафов: {sum(arms)}")
     ax.set_title(title, **for_title)
     ax.text(0.9, 1.1, f'Всего штрафов: {sum(arms)}', fontsize=size,
              color='black', bbox=dict(boxstyle='round', facecolor='wheat',
@@ -54,20 +53,19 @@ def arm_pies(l_arms, names):
     plt.tight_layout()
 
 
-def fingers_bar(l_fingers, colors, names):
+def hbars(data, colors, names, ylabels, /, title=''):
     """
-    Создание столбчатых диаграмм для пальцев рук
+    Создание столбчатых диаграмм
     """
-    y = ['Мизинец л', 'Безымянный л', 'Средний л', 'Указательный л',
-         'Указательный п', 'Средний п', 'Безымянный п', 'Мизинец п']
+    y = ylabels
 
     fig, ax = plt.subplots()
 
     if isinstance(colors, str):
-        x = l_fingers
+        x = data
         y_pos = np.arange(len(y))
         ax.barh(y_pos, x, color=colors, height=0.5, label=names)
-        ax.set_title("Нагрузка на пальцы в тексте", **for_title)
+        ax.set_title(title, **for_title)
         for i, v in enumerate(x):
             if v == 0:
                 continue
@@ -77,7 +75,7 @@ def fingers_bar(l_fingers, colors, names):
     else:
         d = dict(graph=y)
         for i in range(len(names)):
-            d[names[i]] = l_fingers[i]
+            d[names[i]] = data[i]
 
         df = pandas.DataFrame(d)
 
@@ -87,12 +85,12 @@ def fingers_bar(l_fingers, colors, names):
         for i in range(len(names)):
             ax.barh(ind + i * width, getattr(df, names[i]),
                     width, color=colors[i], label=names[i])
-            for index, value in enumerate(l_fingers[i]):
+            for index, value in enumerate(data[i]):
                 if value == 0:
                     continue
                 ax.text(value, index + width * i, str(value), va='center')
 
-        ax.set_title("Нагрузка на пальцы. Сравнение раскладок", **for_title)
+        ax.set_title(title, **for_title)
         ax.set_yticks(ind + width, labels=df.graph, size=size)
     ax.legend()
 

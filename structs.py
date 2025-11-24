@@ -155,8 +155,9 @@ class Layout():
                     pen_count += pc
                     fingers_count = [fc[i] + fingers_count[i] for i in range(8)]
                     arms_count = [ac[i] + arms_count[i] for i in range(3)]
-                    row.append(pc)
-                    rows.append(row)
+                    if linemode:
+                        row.append(pc)
+                        rows.append(row)
                     break
         if linemode:
             self.writef(ext, rows)
@@ -330,7 +331,7 @@ class Layout():
             arm = 'both'
         return (arm, conv, chl_count, chr_count) 
 
-    def per_readf(self, path: str, /) -> tuple:
+    def per_readf(self, path: str, /, linemode=False) -> tuple:
         """
         Анализ текста по путям пальцев
         """
@@ -338,19 +339,54 @@ class Layout():
         convs = dict(good=0, bad=0, ok=0)
         l_ch = dict(ch2=0, ch3=0, ch4=0, ch5=0)
         r_ch = dict(ch2=0,ch3=0, ch4=0, ch5=0)
-        with open(path) as f:
-            text = f.readlines()
-        for line in text:
-            for word in line.split():
-                if word.isdigit() or word.isalnum():
-                    continue
-                ret = self.perebor(word)
-                if ret is None:
-                    continue
-                arm, conv, chl_cnt, chr_cnt = ret
-                arms[arm] += 1
-                convs[conv] += 1
-                for k in chl_cnt.keys():
-                    l_ch[k] += chl_cnt[k]
-                    r_ch[k] += chr_cnt[k]
+        ext = path.split('/')[-1].split('.')[-1]
+        lines = []
+        if ext != 'csv':
+            with open(path) as f:
+                text = f.readlines()
+            for line in text:
+                for word in line.split():
+                    if word.isdigit():
+                        continue
+                    ret = self.perebor(word)
+                    if ret is None:
+                        continue
+                    arm, conv, chl_cnt, chr_cnt = ret
+                    arms[arm] += 1
+                    convs[conv] += 1
+                    for k in chl_cnt.keys():
+                        l_ch[k] += chl_cnt[k]
+                        r_ch[k] += chr_cnt[k]
+                if linemode:
+                    lines.append(line[:-1] + ' ' + conv + '\n')
+            if linemode:
+                self.writef(ext, lines)
+        else:
+            with open(path, newline='') as f:
+                csv_r = csv.reader(f)
+                for row in csv_r:
+                    for word in row:
+                        if word.isdigit():
+                            continue
+                        ret = self.perebor(word)
+                        if ret is None:
+                            continue
+                        arm, conv, chl_cnt, chr_cnt = ret
+                        arms[arm] += 1
+                        convs[conv] += 1
+                        for k in chl_cnt.keys():
+                            l_ch[k] += chl_cnt[k]
+                            r_ch[k] += chr_cnt[k]
+                        if linemode:
+                            row.append(conv)
+                            lines.append(row)
+                        break
+            if linemode:
+                self.writef(ext, lines)
+   
+        arms = [arms[k] for k in 'l both r'.split()]
+        convs = [convs[k] for k in 'bad ok good'.split()]
+        l_ch = [l_ch[k] for k in 'ch2 ch3 ch4 ch5'.split()]
+        r_ch = [r_ch[k] for k in 'ch2 ch3 ch4 ch5'.split()]
+
         return (arms, convs, l_ch, r_ch)
