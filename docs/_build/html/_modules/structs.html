@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+
+<html lang="ru" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>structs &#8212; документация klava 1.0</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="../_static/basic.css?v=b08954a9" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css?v=27fed22d" />
+    <script src="../_static/documentation_options.js?v=9ca2116e"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/translations.js?v=cd1d70c9"></script>
+    <link rel="index" title="Алфавитный указатель" href="../genindex.html" />
+    <link rel="search" title="Поиск" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Исходный код structs</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+
+
+<div class="viewcode-block" id="Key">
+<a class="viewcode-back" href="../structs.html#structs.Key">[документация]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Key</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Класс KEY в зависимости от кода клавиши</span>
+<span class="sd">    определяет ряд клавиши:</span>
+<span class="sd">    tr - ряд с цифрами</span>
+<span class="sd">    ur - верхний ряд</span>
+<span class="sd">    hr - домашний ряд</span>
+<span class="sd">    lr - нижний ряд</span>
+<span class="sd">    Определяет руку(arm) и пальцы(f2-5),</span>
+<span class="sd">    которые нажимают на клавишу,</span>
+<span class="sd">    и штраф для нее(penalty)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">char</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">alt</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">code</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">54</span><span class="p">)):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Неправильный номер клавиши&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">char</span> <span class="o">=</span> <span class="n">char</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alt</span> <span class="o">=</span> <span class="n">alt</span>
+<span class="c1"># 1 - ~ 28 - \</span>
+<span class="c1"># row</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">14</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">=</span> <span class="s2">&quot;tr&quot;</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">29</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">=</span> <span class="s2">&quot;ur&quot;</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">41</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">=</span> <span class="s2">&quot;hr&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">row</span> <span class="o">=</span> <span class="s2">&quot;lr&quot;</span>
+
+<span class="c1"># arm</span>
+        <span class="n">larm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
+            <span class="n">larm</span> <span class="o">+=</span> <span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">14</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">28</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">42</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="n">larm</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arm</span> <span class="o">=</span> <span class="s2">&quot;l&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arm</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span>
+<span class="c1"># finger</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">44</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mi">27</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">53</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finger</span> <span class="o">=</span> <span class="s1">&#39;f5&#39;</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span> <span class="mi">31</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">38</span><span class="p">,</span> <span class="mi">52</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finger</span> <span class="o">=</span> <span class="s1">&#39;f4&#39;</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">46</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">51</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finger</span> <span class="o">=</span> <span class="s1">&#39;f3&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finger</span> <span class="o">=</span> <span class="s1">&#39;f2&#39;</span>
+<span class="c1"># penalty</span>
+        <span class="k">if</span> <span class="n">code</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">34</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">36</span><span class="p">,</span> <span class="mi">40</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">penalty</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span> <span class="o">+</span> <span class="p">[</span><span class="mi">20</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">48</span><span class="p">,</span> <span class="mi">49</span><span class="p">,</span> <span class="mi">26</span><span class="p">]</span> <span class="o">+</span>
+                      <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">12</span><span class="p">))):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">penalty</span> <span class="o">=</span> <span class="mi">2</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">27</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">12</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">penalty</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="k">elif</span> <span class="n">code</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">29</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">penalty</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">penalty</span> <span class="o">=</span> <span class="mi">1</span></div>
+
+
+
+<div class="viewcode-block" id="Layout">
+<a class="viewcode-back" href="../structs.html#structs.Layout">[документация]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Layout</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Класс Layout определяет раскладку, т.е. сопоставляет значения клавиш</span>
+<span class="sd">    с соответствующим экземпляром класса Key</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="n">tr</span><span class="o">=</span><span class="s1">&#39;ё1234567890-=&#39;</span><span class="p">,</span> <span class="n">ur</span><span class="o">=</span><span class="s1">&#39;йцукенгшщзхъ</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span>
+                 <span class="n">hr</span><span class="o">=</span><span class="s1">&#39;фывапролджэ&#39;</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="s1">&#39;ячсмитьбю.&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">alts</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="p">(</span><span class="n">tr</span><span class="p">,</span> <span class="n">ur</span><span class="p">,</span> <span class="n">hr</span><span class="p">,</span> <span class="n">lr</span><span class="p">)]</span> <span class="o">==</span> <span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">10</span><span class="p">]):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Ряды введены неправильно&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tr</span> <span class="o">=</span> <span class="n">tr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ur</span> <span class="o">=</span> <span class="n">ur</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hr</span> <span class="o">=</span> <span class="n">hr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">lr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">color</span> <span class="o">=</span> <span class="n">color</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extract_keys</span><span class="p">(</span><span class="n">alts</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Layout.extract_keys">
+<a class="viewcode-back" href="../structs.html#structs.Layout.extract_keys">[документация]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">extract_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Получает словари с клавишами раскладки и</span>
+<span class="sd">        альтовыми клавишами</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">14</span><span class="p">)))</span> <span class="o">+</span>
+                 <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ur</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">29</span><span class="p">)))</span> <span class="o">+</span>
+                 <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">41</span><span class="p">)))</span> <span class="o">+</span>
+                 <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lr</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="mi">44</span><span class="p">,</span> <span class="mi">54</span><span class="p">))))</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="n">alt_keys</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">alts</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">alt_keys</span><span class="p">[</span><span class="n">alts</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">alts</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">alt</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">keys</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">Key</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">k</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alts</span> <span class="o">=</span> <span class="n">alt_keys</span></div>
+
+
+<div class="viewcode-block" id="Layout.readf">
+<a class="viewcode-back" href="../structs.html#structs.Layout.readf">[документация]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">readf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Выводит нагрузку на руки, пальцы для всего файла</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pen_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">fingers_count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">8</span>
+        <span class="n">arms_count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+            <span class="n">pc</span><span class="p">,</span> <span class="n">fc</span><span class="p">,</span> <span class="n">ac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pen_count</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="n">pen_counter</span> <span class="o">+=</span> <span class="n">pc</span>
+            <span class="n">fingers_count</span> <span class="o">=</span> <span class="p">[</span><span class="n">fingers_count</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">fc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)]</span>
+            <span class="n">arms_count</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">arms_count</span><span class="p">,</span> <span class="n">ac</span><span class="p">)]</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="c1">#        print(f&#39;Нагрузка на пальцы: {fingers_count}&#39;)</span>
+<span class="c1">#        print(f&#39;Нагрузка на руки: левая - {sum(fingers_count[:4])}, &#39; +</span>
+<span class="c1">#              f&#39;правая - {sum(fingers_count[4:])}&#39;)</span>
+<span class="c1">#        print(f&#39;Нагрузка на руки, считая двуручие: левая - {arms_count[0]}, &#39; +</span>
+<span class="c1">#              f&#39;двуручие - {arms_count[1]}, правая - {arms_count[2]}&#39;)</span>
+<span class="c1">#        print(f&#39;Кол-во штрафов в файле {filename}: {pen_counter}&#39;)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">pen_counter</span><span class="p">,</span> <span class="n">fingers_count</span><span class="p">,</span> <span class="n">arms_count</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Layout.lexeme">
+<a class="viewcode-back" href="../structs.html#structs.Layout.lexeme">[документация]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lexeme</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Прогоняет программу по файлу с лексемами и записывает</span>
+<span class="sd">        штрафы для каждой в новый файл result.txt</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">ext</span> <span class="o">==</span> <span class="s1">&#39;csv&#39;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">text</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;result.txt&quot;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+                    <span class="n">penalty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pen_count</span><span class="p">(</span><span class="n">line</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="s1">&#39; &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">penalty</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Штрафы записаны в файл result.txt&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">csv_r</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv_r</span><span class="p">:</span>
+                <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)):</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">isnumeric</span><span class="p">():</span>
+                        <span class="k">continue</span>
+                    <span class="n">pen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pen_count</span><span class="p">(</span><span class="n">item</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">rows</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pen</span><span class="p">)</span>
+                    <span class="k">break</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;result.csv&quot;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">csv_w</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">csv_w</span><span class="o">.</span><span class="n">writerows</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Штрафы записаны в файл result.csv&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Layout.pen_count">
+<a class="viewcode-back" href="../structs.html#structs.Layout.pen_count">[документация]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">pen_count</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">/</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Считает штрафы для рук и пальцев в строке</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">arm_count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span>  <span class="c1"># левая, двуручие, правая</span>
+        <span class="n">pen_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">fingers_count</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">8</span>  <span class="c1"># 0 - 7 левый мизинец - правый</span>
+        <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ch</span><span class="o">.</span><span class="n">isalpha</span><span class="p">():</span>
+                <span class="k">continue</span>
+
+            <span class="n">k1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">k2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ch</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">k1</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">k2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># определение ближней клавиши</span>
+            <span class="k">if</span> <span class="n">k2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">k1</span>
+            <span class="k">elif</span> <span class="n">k1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">k2</span>
+            <span class="k">elif</span> <span class="n">k1</span><span class="o">.</span><span class="n">penalty</span> <span class="o">&gt;=</span> <span class="n">k2</span><span class="o">.</span><span class="n">penalty</span><span class="p">:</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">k2</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">k1</span>
+
+            <span class="n">pen</span> <span class="o">=</span> <span class="n">k</span><span class="o">.</span><span class="n">penalty</span>
+
+            <span class="k">if</span> <span class="n">ch</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+                <span class="n">pen_counter</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># shift</span>
+                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">arm</span> <span class="o">==</span> <span class="s1">&#39;l&#39;</span><span class="p">:</span>
+                    <span class="n">fingers_count</span><span class="p">[</span><span class="mi">7</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">fingers_count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">arm_count</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">alt</span><span class="p">:</span>
+                <span class="n">pen_counter</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># alt</span>
+                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">arm</span> <span class="o">==</span> <span class="s1">&#39;l&#39;</span><span class="p">:</span>
+                    <span class="n">arm_count</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">arm_count</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">pen_counter</span> <span class="o">+=</span> <span class="n">pen</span>
+
+            <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;lf5&#39;</span><span class="p">,</span> <span class="s1">&#39;lf4&#39;</span><span class="p">,</span> <span class="s1">&#39;lf3&#39;</span><span class="p">,</span> <span class="s1">&#39;lf2&#39;</span><span class="p">,</span> <span class="s1">&#39;rf2&#39;</span><span class="p">,</span>
+                           <span class="s1">&#39;rf3&#39;</span><span class="p">,</span> <span class="s1">&#39;rf4&#39;</span><span class="p">,</span> <span class="s1">&#39;rf5&#39;</span><span class="p">],</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)))</span>
+            <span class="n">fingers_count</span><span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="o">.</span><span class="n">arm</span> <span class="o">+</span> <span class="n">k</span><span class="o">.</span><span class="n">finger</span><span class="p">]]</span> <span class="o">+=</span> <span class="n">pen</span>  
+
+            <span class="k">if</span> <span class="n">ch</span><span class="o">.</span><span class="n">isupper</span><span class="p">()</span> <span class="ow">or</span> <span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">alt</span> <span class="ow">and</span> <span class="n">k</span><span class="o">.</span><span class="n">arm</span> <span class="o">==</span> <span class="s1">&#39;l&#39;</span><span class="p">):</span>
+                <span class="n">arm_count</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pen</span>
+            <span class="k">elif</span> <span class="n">k</span><span class="o">.</span><span class="n">arm</span> <span class="o">==</span> <span class="s1">&#39;r&#39;</span> <span class="ow">or</span> <span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">alt</span> <span class="ow">and</span> <span class="n">k</span><span class="o">.</span><span class="n">arm</span> <span class="o">==</span> <span class="s1">&#39;r&#39;</span><span class="p">):</span>
+                <span class="n">arm_count</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pen</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">arm_count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">pen</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">pen_counter</span><span class="p">,</span> <span class="n">fingers_count</span><span class="p">,</span> <span class="n">arm_count</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">klava</a></h1>
+
+
+
+
+
+
+
+
+
+<search id="searchbox" style="display: none" role="search">
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Search"/>
+      <input type="submit" value="Искать" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script><h3>Навигация</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">klava</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Код модуля</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, ed.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
