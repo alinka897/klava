@@ -8,21 +8,26 @@ def show(layout: list | s.Layout, path: str, /, static=True,
     """
     Отображение графиков в зависимости от параметров
     """
-    title = "Нагрузка на пальцы в тексте" 
+    filename = path.split('/')[-1]
     y = ['Мизинец л', 'Безымянный л', 'Средний л', 'Указательный л',
          'Указательный п', 'Средний п', 'Безымянный п', 'Мизинец п']
     if isinstance(layout, s.Layout):
         if static:
             penalty, fingers, arms = layout.readf(path, linemode=linemode)
+            title = f"Нагрузка на пальцы в {filename}\n{layout.name}" 
             v.hbars(fingers, layout.color, layout.name, y, title)
+            title = f"Нагрузка на руки в {filename}\n{layout.name}"
+            labels = ["Левая рука", "Двуручие", "Правая рука"]
+            v.arm_pie(arms, layout.name, title, labels)
         else:
             y = ['2 символа', '3 символа', '4 символа', '5 символов']
             convs, l_ch, r_ch = layout.per_readf(path, linemode=linemode)
-            title = "Удобные последовательности. Левая рука"
+            title = f"Удобные переборы. Левая рука\n{filename}"
             v.bars(l_ch, layout.color, layout.name, y, title)
-            title = "Удобные последовательности. Правая рука"
+            title = f"Удобные переборы. Правая рука\n{filename}"
             v.bars(r_ch, layout.color, layout.name, y, title)
-        v.arm_pie(convs, layout.name, labels=['НУ', 'ЧУ', 'У'])
+            title = "Кол-во удобных переборов\n"
+            v.arm_pie(convs, layout.name, title, ['НУ', 'ЧУ', 'У'])
         plt.show()
         return
     los = layout
@@ -33,7 +38,7 @@ def show(layout: list | s.Layout, path: str, /, static=True,
         l_fingers = [ret[1] for ret in rets]
         l_arms = [ret[2] for ret in rets]
         v.arm_pies(l_arms, names)
-        title = "Нагрузка на пальцы. Сравнение раскладок"
+        title = f"Нагрузка на пальцы. Сравнение раскладок в {filename}\n"
         v.hbars(l_fingers, colors, names, y, title)
         plt.show()
         return
@@ -42,7 +47,8 @@ def show(layout: list | s.Layout, path: str, /, static=True,
     l_convs = [ret[0] for ret in rets]
     l_l = [ret[1] for ret in rets]
     l_r = [ret[2] for ret in rets]
-    v.arm_pies(l_convs, names)
+    labels = ['НУ', 'ЧУ', 'У']
+    v.arm_pies(l_convs, names, labels=labels)
     title = "Удобные последовательности. Левая рука"
     v.bars(l_l, colors, names, y, title) 
     title = "Удобные последовательности. Правая рука"
@@ -156,8 +162,8 @@ def main() -> None:
                 path = input("\nВведите путь к файлу: ")
                 show(los, path, static=static)
 
-        except ValueError:
-            print("\nВведите число!")
+        #except ValueError:
+         #   print("\nВведите число!")
 
         except FileNotFoundError:
             print("\nФайл не найден!")

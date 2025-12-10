@@ -7,17 +7,16 @@ for_title = dict(fontsize=18, color='k', fontweight='bold')
 size = '14'
 
 
-def arm_pie(data: list, name: list, /, ax='',
-            labels = ["Левая рука", "Двуручие", "Правая рука"]):
+def arm_pie(data: list, name: list, title: str, labels: list, /, ax=''):
     """
     Создание круговой диаграммы для рук (левая, правая, двуручие) и переборов
     """
     if ax == '':
         fig, ax = plt.subplots()
-        title = f"Нагрузка на руки в тексте\n{name}"
+        title = title 
     else:
-        title = f"\n{name}"
-
+        title = f"{name}." 
+    title = title + f" Всего: {sum(data)}"
     def abs(pct, data):
         absolute = int(np.round(pct/100. * np.sum(data)))
         return f'{pct: .1f}%\n({absolute: d})'
@@ -30,12 +29,10 @@ def arm_pie(data: list, name: list, /, ax='',
                                       textprops={'fontsize': size})
     plt.setp(autotexts, size=size)
     ax.set_title(title, **for_title)
-    ax.text(0.9, 1.1, f'Всего штрафов: {sum(data)}', fontsize=size,
-             color='black', bbox=dict(boxstyle='round', facecolor='wheat',
-             alpha=0.5))
 
 
-def arm_pies(l_arms, names):
+def arm_pies(l_arms, names, /, labels=["Левая рука", "Двуручие", "Правая рука"],
+             title=''):
     col = round(len(l_arms) / 2)
     fig, axs = plt.subplots(2, col)
     
@@ -43,14 +40,14 @@ def arm_pies(l_arms, names):
         for j in range(col):
             index = i*col + j
             if col == 1:
-                arm_pie(l_arms[index], names[index],
-                        ax=axs[i]) 
+                arm_pie(l_arms[index], names[index], title,
+                        labels, ax=axs[i]) 
             else:
                 if index > (len(l_arms) - 1):
                     fig.delaxes(axs[i, j]) 
                     continue
-                arm_pie(l_arms[index], names[index],
-                        ax=axs[i, j]) 
+                arm_pie(l_arms[index], names[index], title,
+                        labels, ax=axs[i, j]) 
 
 
 def hbars(data, colors, names, ylabels, /, title=''):
@@ -113,12 +110,12 @@ def bars(data, colors, names, xlabels, /, title=''):
     if isinstance(colors, str):
         y = data
         x_pos = np.arange(len(x))
-        ax.bar(x_pos, y, color=colors, height=0.5, label=names)
+        ax.bar(x_pos, y, color=colors, width=0.5, label=names)
         ax.set_title(title, **for_title)
         for i, v in enumerate(y):
             if v == 0:
                 continue
-            ax.text(v, i, str(v), size=size, ha='')
+            ax.text(v, i, str(v), size=size, ha='center')
         ax.set_xticks(ticks=x_pos, labels=x, size=size)
 
     else:
