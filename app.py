@@ -17,12 +17,12 @@ def show(layout: list | s.Layout, path: str, /, static=True,
             v.hbars(fingers, layout.color, layout.name, y, title)
         else:
             y = ['2 символа', '3 символа', '4 символа', '5 символов']
-            arms, convs, l_ch, r_ch = layout.per_readf(path, linemode=linemode)
+            convs, l_ch, r_ch = layout.per_readf(path, linemode=linemode)
             title = "Удобные последовательности. Левая рука"
-            v.hbars(l_ch, layout.color, layout.name, y, title)
+            v.bars(l_ch, layout.color, layout.name, y, title)
             title = "Удобные последовательности. Правая рука"
-            v.hbars(r_ch, layout.color, layout.name, y, title)
-        v.arm_pie(arms, layout.name)
+            v.bars(r_ch, layout.color, layout.name, y, title)
+        v.arm_pie(convs, layout.name, labels=['НУ', 'ЧУ', 'У'])
         plt.show()
         return
     los = layout
@@ -39,15 +39,14 @@ def show(layout: list | s.Layout, path: str, /, static=True,
         return
     y = ['2 символа', '3 символа', '4 символа', '5 символов']
     rets = [lo.per_readf(path) for lo in los]
-    l_arms = [ret[0] for ret in rets]
-    l_convs = [ret[1] for ret in rets]
-    l_l = [ret[2] for ret in rets]
-    l_r = [ret[3] for ret in rets]
-    v.arm_pies(l_arms, names)
+    l_convs = [ret[0] for ret in rets]
+    l_l = [ret[1] for ret in rets]
+    l_r = [ret[2] for ret in rets]
+    v.arm_pies(l_convs, names)
     title = "Удобные последовательности. Левая рука"
-    v.hbars(l_l, colors, names, y, title) 
+    v.bars(l_l, colors, names, y, title) 
     title = "Удобные последовательности. Правая рука"
-    v.hbars(l_r, colors, names, y, title)
+    v.bars(l_r, colors, names, y, title)
     plt.show()
     
 

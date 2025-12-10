@@ -82,6 +82,7 @@ class Layout():
         if not ([len(r) for r in (tr, ur, hr, lr)] == [13, 13, 11, 10]):
             print("Ряды введены неправильно")
             return
+        self.better_keys=dict()
         self.tr = tr
         self.ur = ur
         self.hr = hr
@@ -167,6 +168,8 @@ class Layout():
         """
         Выбор клавиши альтовой или обычной
         """
+        if ch.lower() in self.better_keys:
+            return self.better_keys[ch.lower()]
         k1 = self.keys.get(ch.lower(), 0)
         k2 = self.alts.get(ch.lower(), 0)
         # определение ближней клавиши
@@ -177,6 +180,7 @@ class Layout():
                 k1 = k2
         elif k1 == 0 and k2 != 0:
             k1 = k2
+        self.better_keys[ch.lower()] = k1
         return k1
 
     def line_penalty_counter(self, line: str, /) -> tuple:
@@ -224,6 +228,15 @@ class Layout():
 
         return (pen_counter, fingers_count, arm_count)
 
+    def check_direction(self, k1: Key, k2: Key) -> bool:
+        """
+        Проверка направления от внешнего к внутреннему (от клавиши 1 до 2) 
+        """
+        comp = dict(zip('f2 f3 f4 f5'.split(), range(2, 6)))
+        f1, f2 = comp[k1.finger], comp[k2.finger]
+        if f1 >= f2:
+            return True
+        return False
 
     def perebor(self, word: str , /) -> tuple | None:
         """
@@ -285,14 +298,14 @@ class Layout():
                         chr_count[f'ch{streak}'] += 1
                         conv_ch = ''
                     if (codes[0] - codes[1]) > 0: # если направление сохранено
-                        conv = 'ok'
+                        conv = 'good'
                     else:
-                        conv = 'bad'
+                        conv = 'ok'
                 else:
                     if (codes[0] - codes[1]) < 0:
-                        conv = 'ok' # частично удобно
+                        conv = 'good' # частично удобно
                     else:
-                        conv = 'bad'
+                        conv = 'ok'
                     if conv_ch == 'good':
                         chl_count[f'ch{streak}'] += 1
                         conv_ch = ''
@@ -327,15 +340,12 @@ class Layout():
                 chr_count[f'ch{streak}'] += 1
             else:
                 chl_count[f'ch{streak}'] += 1
-        if two_arms:
-            arm = 'both'
-        return (arm, conv, chl_count, chr_count) 
+        return (conv, chl_count, chr_count) 
 
     def per_readf(self, path: str, /, linemode=False) -> tuple:
         """
         Анализ текста по путям пальцев
         """
-        arms = dict(r=0, both=0, l=0) 
         convs = dict(good=0, bad=0, ok=0)
         l_ch = dict(ch2=0, ch3=0, ch4=0, ch5=0)
         r_ch = dict(ch2=0,ch3=0, ch4=0, ch5=0)
@@ -343,22 +353,18 @@ class Layout():
         lines = []
         if ext != 'csv':
             with open(path) as f:
-                text = f.readlines()
-            for line in text:
-                for word in line.split():
-                    if word.isdigit():
-                        continue
-                    ret = self.perebor(word)
-                    if ret is None:
-                        continue
-                    arm, conv, chl_cnt, chr_cnt = ret
-                    arms[arm] += 1
-                    convs[conv] += 1
-                    for k in chl_cnt.keys():
-                        l_ch[k] += chl_cnt[k]
-                        r_ch[k] += chr_cnt[k]
-                if linemode:
-                    lines.append(line[:-1] + ' ' + conv + '\n')
+                for line in f:
+                    for word in line.split():
+                        ret = self.perebor(word)
+                        if ret is None:
+                            continue
+                        conv, chl_cnt, chr_cnt = ret
+                        convs[conv] += 1
+                        for k in chl_cnt.keys():
+                            l_ch[k] += chl_cnt[k]
+                            r_ch[k] += chr_cnt[k]
+                    if linemode:
+                        lines.append(line[:-1] + ' ' + conv + '\n')
             if linemode:
                 self.writef(ext, lines)
         else:
@@ -371,8 +377,7 @@ class Layout():
                         ret = self.perebor(word)
                         if ret is None:
                             continue
-                        arm, conv, chl_cnt, chr_cnt = ret
-                        arms[arm] += 1
+                        conv, chl_cnt, chr_cnt = ret
                         convs[conv] += 1
                         for k in chl_cnt.keys():
                             l_ch[k] += chl_cnt[k]
@@ -384,9 +389,8 @@ class Layout():
             if linemode:
                 self.writef(ext, lines)
    
-        arms = [arms[k] for k in 'l both r'.split()]
         convs = [convs[k] for k in 'bad ok good'.split()]
         l_ch = [l_ch[k] for k in 'ch2 ch3 ch4 ch5'.split()]
         r_ch = [r_ch[k] for k in 'ch2 ch3 ch4 ch5'.split()]
 
-        return (arms, convs, l_ch, r_ch)
+        return (convs, l_ch, r_ch)
