@@ -18,7 +18,7 @@ def show(layout: list | s.Layout, path: str, /, static=True,
             title = f"Нагрузка на пальцы в {filename}\n{layout.name}" 
             v.hbars(fingers, layout.color, layout.name, y, title)
             title = f"Нагрузка на руки в {filename}\n"
-            labels = ["Левая рука", "Двуручие", "Правая рука"]
+            labels = ["Левая", "Обе", "Правая"]
             v.arm_pie(arms, layout.name, title, labels)
         else:
             y = ['2 символа', '3 символа', '4 символа', '5 символов']

@@ -233,24 +233,47 @@ class Layout():
         """
         comp = dict(zip('f2 f3 f4 f5'.split(), range(2, 6)))
         f1, f2 = comp[k1.finger], comp[k2.finger]
-        if f1 >= f2:
+        if f1 > f2:
             return True
+        if f1 == f2 and (f1 == 2 or f1 == 5):
+            codes = [0] * 2
+            i = 0 
+            for k in (k1, k2):
+                if k.row == 'hr':
+                    codes[i] = k.code
+                elif k.row == 'ur':
+                    codes[i] = k.code + 14
+                elif k.row == 'lr':
+                    codes[i] = k.code - 14
+                else:
+                    codes[i] = k.code + 2 * 14
+                i += 1
+            if k1.arm == 'r':
+                if codes[0] > codes[1]:
+                    return True
+                else:
+                    return False
+            else:
+                if codes[0] < codes[1]:
+                    return True
+                else:
+                    return False
         return False
 
     def perebor(self, word: str , /) -> tuple | None:
         """
         Анализ слова по путям пальцев
         """
-        word = word.strip(punc)
+        
         if len(word) <= 1:
             return
         # кол-во удобных двухсимвольных, трех-... переборов
         chr_count = dict(ch2=0, ch3=0, ch4=0, ch5=0)
         chl_count = dict(ch2=0,ch3=0, ch4=0, ch5=0)
-        conv = '' # удобство набития слова
-        conv_ch = '' # удобство набития символов 
+        conv = '' # удобство перебора 
+        conv_map = dict(zip('bad ok good'.split(), range(3)))
+        convs = [0] * 3
         streak = 1 # сколько символов в удобном переборе 
-        two_arms = False
         arm = ''
         for i in range(len(word) - 1):
 
@@ -265,87 +288,42 @@ class Layout():
             # руки меняются -> неудобство, пред сост сохраняем в словарь
             if arm != k2.arm:
                 # cлово бьется двумя руками
-                two_arms = True
-                # добавляем только удобные переборы
-                if conv_ch == 'good':
+                if streak > 1:
+                    if streak > 5:
+                        streak = 5
                     if arm == 'r':
                         chr_count[f'ch{streak}'] += 1
                     else:
                         chl_count[f'ch{streak}'] += 1
                 streak = 1
-                conv_ch = ''
-                conv = 'bad' # слово неудобно
-
-            # переход на другой ряд на той же стороне
-            elif k1.row != k2.row:
-                # для сравнения проекция на хоум ряд
-                codes = [0] * 2
-                i = 0 
-                for k in (k1, k2):
-                    if k.row == 'hr':
-                        codes[i] = k.code
-                    elif k.row == 'ur':
-                        codes[i] = k.code + 14
-                    elif k.row == 'lr':
-                        codes[i] = k.code - 14
-                    else:
-                        codes[i] = k.code + 2 * 14
-                    i += 1
-
-                if arm == 'r':
-                    if conv_ch == 'good':
-                        chr_count[f'ch{streak}'] += 1
-                        conv_ch = ''
-                    if (codes[0] - codes[1]) > 0: # если направление сохранено
-                        conv = 'good'
-                    else:
-                        conv = 'ok'
-                else:
-                    if (codes[0] - codes[1]) < 0:
-                        conv = 'good' # частично удобно
-                    else:
-                        conv = 'ok'
-                    if conv_ch == 'good':
-                        chl_count[f'ch{streak}'] += 1
-                        conv_ch = ''
-                streak = 1
-
-            # удобная последовательность
-            elif arm == 'l':
-                if k1.code <= k2.code:
-                    streak += 1
-                    conv_ch = 'good'
-                else:
-                    if conv_ch == 'good':
-                        chl_count[f'ch{streak}'] += 1
-                        conv_ch = ''
-                    conv = 'bad'
-                    streak = 1
+                conv = 'bad'
+            # на одной стороне
             else:
-                if k1.code >= k2.code:
+                if self.check_direction(k1, k2): # направление сохранено
+                    conv = 'good'
+                    if arm == 'r':
+                        chr_count['ch2'] += 1
+                    else:
+                        chl_count['ch2'] += 1
                     streak += 1
-                    conv_ch = 'good'
                 else:
-                    if conv_ch == 'good':
-                        chr_count[f'ch{streak}'] += 1
-                        conv_ch = ''
-                    conv = 'bad'
-                    streak = 1
-        if conv == '':
-            conv = 'good'
-        # последняя последовательно не обработанная в цикле
+                    conv = 'ok'
+            convs[conv_map[conv]] += 1
+        # последний удобный перебор
         if streak != 1:
+            if streak > 5:
+                streak = 5
             if arm == 'r':
                 chr_count[f'ch{streak}'] += 1
             else:
                 chl_count[f'ch{streak}'] += 1
-        return (conv, chl_count, chr_count) 
+        return (convs, chl_count, chr_count) 
 
     def per_readf(self, path: str, /, linemode=False) -> tuple:
         """
         Анализ текста по путям пальцев
         """
-        convs = dict(good=0, bad=0, ok=0)
+        gconvs = [0]*3
         l_ch = dict(ch2=0, ch3=0, ch4=0, ch5=0)
         r_ch = dict(ch2=0,ch3=0, ch4=0, ch5=0)
         ext = path.split('/')[-1].split('.')[-1]
@@ -357,13 +335,14 @@ class Layout():
                         ret = self.perebor(word)
                         if ret is None:
                             continue
-                        conv, chl_cnt, chr_cnt = ret
-                        convs[conv] += 1
+                        convs, chl_cnt, chr_cnt = ret
+                        gconvs = [convs[i] + gconvs[i] for i in
+                                  range(len(gconvs))]
                         for k in chl_cnt.keys():
                             l_ch[k] += chl_cnt[k]
                             r_ch[k] += chr_cnt[k]
                     if linemode:
-                        lines.append(line[:-1] + ' ' + conv + '\n')
+                        lines.append(line[:-1] + ' ' + str(convs) + '\n')
             if linemode:
                 self.writef(ext, lines)
         else:
@@ -376,20 +355,20 @@ class Layout():
                         ret = self.perebor(word)
                         if ret is None:
                             continue
-                        conv, chl_cnt, chr_cnt = ret
-                        convs[conv] += 1
+                        convs, chl_cnt, chr_cnt = ret
+                        gconvs = [convs[i] + gconvs[i] for i in
+                                  range(len(gconvs))]
                         for k in chl_cnt.keys():
                             l_ch[k] += chl_cnt[k]
                             r_ch[k] += chr_cnt[k]
                         if linemode:
-                            row.append(conv)
+                            row.append(str(convs))
                             lines.append(row)
                         break
             if linemode:
                 self.writef(ext, lines)
    
-        convs = [convs[k] for k in 'bad ok good'.split()]
         l_ch = [l_ch[k] for k in 'ch2 ch3 ch4 ch5'.split()]
         r_ch = [r_ch[k] for k in 'ch2 ch3 ch4 ch5'.split()]
 
-        return (convs, l_ch, r_ch)
+        return (gconvs, l_ch, r_ch)
