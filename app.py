@@ -10,13 +10,14 @@ def show(layout: list | s.Layout, path: str, /, static=True,
     """
     filename = path.split('/')[-1]
     y = ['Мизинец л', 'Безымянный л', 'Средний л', 'Указательный л',
-         'Указательный п', 'Средний п', 'Безымянный п', 'Мизинец п']
+         'Указательный п', 'Средний п', 'Безымянный п', 'Мизинец п', 
+         'Большой п']
     if isinstance(layout, s.Layout):
         if static:
             penalty, fingers, arms = layout.readf(path, linemode=linemode)
             title = f"Нагрузка на пальцы в {filename}\n{layout.name}" 
             v.hbars(fingers, layout.color, layout.name, y, title)
-            title = f"Нагрузка на руки в {filename}\n{layout.name}"
+            title = f"Нагрузка на руки в {filename}\n"
             labels = ["Левая рука", "Двуручие", "Правая рука"]
             v.arm_pie(arms, layout.name, title, labels)
         else:
@@ -49,9 +50,9 @@ def show(layout: list | s.Layout, path: str, /, static=True,
     l_r = [ret[2] for ret in rets]
     labels = ['НУ', 'ЧУ', 'У']
     v.arm_pies(l_convs, names, labels=labels)
-    title = "Удобные последовательности. Левая рука"
+    title = f"Удобные переборы. Левая рука. {filename}"
     v.bars(l_l, colors, names, y, title) 
-    title = "Удобные последовательности. Правая рука"
+    title = f"Удобные переборы. Правая рука. {filename}"
     v.bars(l_r, colors, names, y, title)
     plt.show()
     

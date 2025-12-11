@@ -5,6 +5,7 @@ import structs as s
 
 for_title = dict(fontsize=18, color='k', fontweight='bold')
 size = '14'
+pie_colors = ['#90369c', '#55bda4', '#e88f2a']
 
 
 def arm_pie(data: list, name: list, title: str, labels: list, /, ax=''):
@@ -13,25 +14,19 @@ def arm_pie(data: list, name: list, title: str, labels: list, /, ax=''):
     """
     if ax == '':
         fig, ax = plt.subplots()
-        title = title 
-    else:
-        title = f"{name}." 
-    title = title + f" Всего: {sum(data)}"
-    def abs(pct, data):
-        absolute = int(np.round(pct/100. * np.sum(data)))
-        return f'{pct: .1f}%\n({absolute: d})'
+    title = title + f"{name}\nВсего: {sum(data)}"
 
-    labels = labels
     filtr_lab = [labels[i] for i in range(len(data)) if data[i] != 0]
     filtr_data = [data[i] for i in range(len(data)) if data[i] != 0]
-    wedges, texts, autotexts = ax.pie(filtr_data, labels=filtr_lab,
-                                      autopct=lambda pct: abs(pct, data),
+    wedges, texts, autotexts = ax.pie(filtr_data, colors=pie_colors,
+                                      autopct='%1.1f%%',
                                       textprops={'fontsize': size})
-    plt.setp(autotexts, size=size)
     ax.set_title(title, **for_title)
+    lbs = [filtr_lab[i] + f' ({filtr_data[i]})' for i in range(len(filtr_data))] 
+    ax.legend(wedges, labels=lbs, loc='upper right')
 
 
-def arm_pies(l_arms, names, /, labels=["Левая рука", "Двуручие", "Правая рука"],
+def arm_pies(l_arms, names, /, labels=["Левая", "Обе", "Правая"],
              title=''):
     col = round(len(l_arms) / 2)
     fig, axs = plt.subplots(2, col)
@@ -115,7 +110,7 @@ def bars(data, colors, names, xlabels, /, title=''):
         for i, v in enumerate(y):
             if v == 0:
                 continue
-            ax.text(v, i, str(v), size=size, ha='center')
+            ax.text(i, v, str(v), size=size, ha='center')
         ax.set_xticks(ticks=x_pos, labels=x, size=size)
 
     else:

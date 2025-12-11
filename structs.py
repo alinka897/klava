@@ -129,7 +129,7 @@ class Layout():
         """
         ext = path.split('/')[-1].split('.')[-1]
         pen_count = 0
-        fingers_count = [0] * 8
+        fingers_count = [0] * 9
         arms_count = [0] * 3
         lines = []
         if ext != 'csv':
@@ -137,7 +137,7 @@ class Layout():
                 for line in f:
                     pc, fc, ac = self.line_penalty_counter(line)
                     pen_count += pc
-                    fingers_count = [fingers_count[i] + fc[i] for i in range(8)]
+                    fingers_count = [fingers_count[i] + fc[i] for i in range(9)]
                     arms_count = [x + y for x, y in zip(arms_count, ac)]
                     if linemode:
                         lines.append(line[:-1] + ' ' + str(pc) + '\n')
@@ -154,7 +154,7 @@ class Layout():
                         continue
                     pc, fc, ac = self.line_penalty_counter(item)
                     pen_count += pc
-                    fingers_count = [fc[i] + fingers_count[i] for i in range(8)]
+                    fingers_count = [fc[i] + fingers_count[i] for i in range(9)]
                     arms_count = [ac[i] + arms_count[i] for i in range(3)]
                     if linemode:
                         row.append(pc)
@@ -189,10 +189,8 @@ class Layout():
         """
         arm_count = [0] * 3  # левая, двуручие, правая
         pen_counter = 0
-        fingers_count = [0] * 8  # 0 - 7 левый мизинец - правый
+        fingers_count = [0] * 9  # 0 - 7 левый мизинец - правый 8 - правый большой
         for ch in line:
-            if not ch.isalpha():
-                continue
 
             k = self.choose_key(ch)
             if k is None:
@@ -208,6 +206,7 @@ class Layout():
                 arm_count[1] += 1
 
             if k.alt:
+                fingers_count[8] += 1
                 pen_counter += 1  # alt
                 if k.arm == 'l':
                     arm_count[1] += 1
