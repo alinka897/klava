@@ -24,12 +24,13 @@ class Key():
     которые нажимают на клавишу,
     и штраф для нее(penalty)
     """
-    def __init__(self, code: int, char: str, /, alt=False):
+    def __init__(self, code: int, char: str, /, alt=False, shift=False):
         if not (code in range(1, 54)):
             print("Неправильный номер клавиши")
         self.code = code
         self.char = char
         self.alt = alt
+        self.shift = shift
 # 1 - ~ 28 - \
 # row
         if code in range(1, 14):
@@ -78,7 +79,9 @@ class Layout():
     с соответствующим экземпляром класса Key
     """
     def __init__(self, /, tr='ё1234567890-=', ur='йцукенгшщзхъ\\',
-                 hr='фывапролджэ', lr='ячсмитьбю.', color='k', name='', **alts):
+                 hr='фывапролджэ', lr='ячсмитьбю.', color='k', name='',
+                 shifts=dict(zip('1234567890-=\\.','!"№;%:?*()_+/,')),
+                 **alts):
         if not ([len(r) for r in (tr, ur, hr, lr)] == [13, 13, 11, 10]):
             print("Ряды введены неправильно")
             return
@@ -89,9 +92,9 @@ class Layout():
         self.lr = lr
         self.name = name
         self.color = color
-        self.extract_keys(alts)
+        self.extract_keys(alts, shifts)
 
-    def extract_keys(self, alts: dict):
+    def extract_keys(self, alts: dict, shifts: dict):
         """
         Получает словари с клавишами раскладки и
         альтовыми клавишами
@@ -102,12 +105,19 @@ class Layout():
                  list(zip(self.lr, range(44, 54))))
         keys = dict()
         alt_keys = dict()
+        shift_keys = dict()
         for k in d:
             if k in alts:
                 alt_keys[alts[k]] = Key(d[k], alts[k], alt=True)
+            if k in shifts:
+                shift_keys[shifts[k]] = Key(d[k], shifts[k], shift=True)
+            else:
+                if k.isalpha():
+                    shift_keys[k.upper()] = Key(d[k], k.upper(), shift=True)
             keys[k] = Key(d[k], k)
         self.keys = keys
         self.alts = alt_keys
+        self.shifts = shift_keys
 
     def writef(self, ext: str, data: list, /) -> None:
         """
@@ -168,19 +178,21 @@ class Layout():
         """
         Выбор клавиши альтовой или обычной
         """
-        if ch.lower() in self.better_keys:
-            return self.better_keys[ch.lower()]
-        k1 = self.keys.get(ch.lower(), 0)
-        k2 = self.alts.get(ch.lower(), 0)
-        # определение ближней клавиши
-        if k1 == 0 and k2 == 0:
-            return
-        elif k1 != 0 and k2 != 0:
-            if k2.penalty < k1.penalty:
-                k1 = k2
-        elif k1 == 0 and k2 != 0:
-            k1 = k2
-        self.better_keys[ch.lower()] = k1
+        if ch in self.better_keys:
+            return self.better_keys[ch]
+        k1 = self.keys.get(ch, 0)
+        k2 = self.alts.get(ch, 0)
+        k3 = self.shifts.get(ch, 0)
+        d = dict()
+        pens = []
+        for k in (k1, k2, k3):
+            if k != 0:
+                d[k.penalty] = k 
+                pens.append(k.penalty)
+        if pens == []:
+            return 
+        k1 = d[min(pens)]
+        self.better_keys[ch] = k1
         return k1
 
     def line_penalty_counter(self, line: str, /) -> tuple:
@@ -191,13 +203,12 @@ class Layout():
         pen_counter = 0
         fingers_count = [0] * 9  # 0 - 7 левый мизинец - правый 8 - правый большой
         for ch in line:
-
             k = self.choose_key(ch)
             if k is None:
                 continue
             pen = k.penalty
 
-            if ch.isupper():
+            if k.shift:
                 pen_counter += 1  # shift
                 if k.arm == 'l':
                     fingers_count[7] += 1
@@ -218,7 +229,7 @@ class Layout():
                          range(8)))
             fingers_count[d[k.arm + k.finger]] += pen  
 
-            if ch.isupper() or (k.alt and k.arm == 'l'):
+            if k.shift or (k.alt and k.arm == 'l'):
                 arm_count[1] += pen
             elif k.arm == 'r' or (k.alt and k.arm == 'r'):
                 arm_count[2] += pen
@@ -266,7 +277,6 @@ class Layout():
         """
         Анализ слова по путям пальцев
         """
-        
         if len(word) <= 1:
             return
         # кол-во удобных двухсимвольных, трех-... переборов
@@ -305,7 +315,8 @@ class Layout():
 
             k2 = self.choose_key(word[i + 1])
             if k2 is None or k1 is None:
-                count(arm, prev_conv)
+                if prev_conv != '':
+                    count(arm, prev_conv)
                 continue
 
             arm = k1.arm
@@ -328,7 +339,8 @@ class Layout():
                     count(arm, prev_conv)
             prev_conv = conv
         # учет последнего длинного перебора
-        count(arm, prev_conv)
+        if prev_conv != '':
+            count(arm, prev_conv)
         return (convs, chl_count, chr_count) 
 
     def per_readf(self, path: str, /, linemode=False) -> tuple:

@@ -78,39 +78,48 @@ def choose_l(num: int) -> s.Layout:
                   Скоропись='#22993c', ANT='#eb9409', Зубачев='#0967eb', Вызов='k')
     match num:
         case 1:
-            
             name = 'ЙЦУКЕН'
             layout = s.Layout(name=name, color=colors.get(name))
         case 2:
+            shifts = dict(zip('1234567890-;\',./', '!@ёЁъЪ&*()_:"<>?'))
             name = 'Фонетическая'
             layout = s.Layout('ю1234567890-ч', 'явертыуиопшщэ',
                               'асдфгхйкл;\'', 'зьцжбнм,./', name=name,
-                              color=colors.get(name))
+                              color=colors.get(name),
+                              shifts=shifts)
 
         case 3:
+            shifts = dict(zip('1234567890*=ь,.', 'ЪЬ№%:;-*()_+ъ?!'))
             name = 'Диктор'
-            layout = s.Layout('ё1234567890*=', 'цья,.звкдчшщ@',
+            layout = s.Layout('ё1234567890*=', 'цья,.звкдчшщ😀',
                               'уиеоалнтсрй', 'фэхыюбмпгж', name=name,
-                              color=colors.get(name))
+                              color=colors.get(name),
+                              shifts=shifts)
         case 4:
             name = 'Скоропись'
-            layout = s.Layout('*.ёъ?!@-\'()-"', 'цья,.звкдчшщ"',
+            layout = s.Layout('*.ёъ?!😀-\'()-«', 'цья,.звкдчшщ„',
                               'уиеоалнтсрй', 'фэхыюбмпгж', name=name,
                               color=colors.get(name))
         case 5:
+            shifts = dict(zip('\\!?\'"=+-*/%(),.', '_9753102468«»;:'))
             name = 'ANT'
             layout = s.Layout('\\!?\'"=+-*/%()', 'гпрдмыияухцжч',
                               'внстльоеакз', 'щйшб,.юэёф', name=name,
-                              color=colors.get(name))
+                              color=colors.get(name),
+                              shifts=shifts)
         case 6:
+            shifts = dict(zip('1234567890-=,\\ь.', '!"№;%:?*()_+Ъ/ъЬ'))
             name = 'Зубачев'
             layout = s.Layout('ё1234567890-=', 'фыая,ймрпхцщ\\',
                               'гиеоултмнзж', 'шью.эбдвкч', name=name,
-                              color=colors.get(name))
+                              color=colors.get(name),
+                              shifts=shifts)
         case 7:
+            shifts = dict(zip('₽ё[{}(=*)+]!щ', '$%7531902468\''))
             name = 'Вызов'
-            layout = s.Layout('@ё[{}(=*)+]!щ', 'быоуьёлдягжцъ',
+            layout = s.Layout('₽ё[{}(=*)+]!щ', 'быоуьёлдягжцъ',
                               'чиеа,.нтсвз', 'шхйк-/рмфп', name=name,
+                              shifts=shifts,
                               у='ю', ч='ц', е='э', н='щ', т='ъ')
     return layout
 
