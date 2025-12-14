@@ -139,7 +139,7 @@ class Layout():
         """
         ext = path.split('/')[-1].split('.')[-1]
         pen_count = 0
-        fingers_count = [0] * 9
+        fingers_count = [0] * 10
         arms_count = [0] * 3
         lines = []
         if ext != 'csv':
@@ -147,7 +147,7 @@ class Layout():
                 for line in f:
                     pc, fc, ac = self.line_penalty_counter(line)
                     pen_count += pc
-                    fingers_count = [fingers_count[i] + fc[i] for i in range(9)]
+                    fingers_count = [fingers_count[i] + fc[i] for i in range(10)]
                     arms_count = [x + y for x, y in zip(arms_count, ac)]
                     if linemode:
                         lines.append(line[:-1] + ' ' + str(pc) + '\n')
@@ -164,7 +164,7 @@ class Layout():
                         continue
                     pc, fc, ac = self.line_penalty_counter(item)
                     pen_count += pc
-                    fingers_count = [fc[i] + fingers_count[i] for i in range(9)]
+                    fingers_count = [fc[i] + fingers_count[i] for i in range(10)]
                     arms_count = [ac[i] + arms_count[i] for i in range(3)]
                     if linemode:
                         row.append(pc)
@@ -187,8 +187,12 @@ class Layout():
         pens = []
         for k in (k1, k2, k3):
             if k != 0:
-                d[k.penalty] = k 
-                pens.append(k.penalty)
+                if k.alt or k.shift:
+                    d[k.penalty + 1] = k
+                    pens.append(k.penalty + 1)
+                else:
+                    d[k.penalty] = k 
+                    pens.append(k.penalty)
         if pens == []:
             return 
         k1 = d[min(pens)]
@@ -201,8 +205,17 @@ class Layout():
         """
         arm_count = [0] * 3  # левая, двуручие, правая
         pen_counter = 0
-        fingers_count = [0] * 9  # 0 - 7 левый мизинец - правый 8 - правый большой
+        fingers_count = [0] * 10  # 0 - 7 левый мизинец - правый 8 - правый большой
+        prev_arm = ''
         for ch in line:
+            if ch == ' ':
+                if prev_arm == 'r':
+                    fingers_count[9] += 1
+                    arm_count[0] += 1
+                else:
+                    fingers_count[8] += 1
+                    arm_count[2] += 1
+                continue
             k = self.choose_key(ch)
             if k is None:
                 continue
@@ -235,6 +248,7 @@ class Layout():
                 arm_count[2] += pen
             else:
                 arm_count[0] += pen
+            prev_arm = k.arm
 
         return (pen_counter, fingers_count, arm_count)
 

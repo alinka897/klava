@@ -11,7 +11,7 @@ def show(layout: list | s.Layout, path: str, /, static=True,
     filename = path.split('/')[-1]
     y = ['Мизинец л', 'Безымянный л', 'Средний л', 'Указательный л',
          'Указательный п', 'Средний п', 'Безымянный п', 'Мизинец п', 
-         'Большой п']
+         'Большой п', 'Большой л']
     if isinstance(layout, s.Layout):
         if static:
             penalty, fingers, arms = layout.readf(path, linemode=linemode)
