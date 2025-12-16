@@ -23,10 +23,9 @@ def show(layout: list | s.Layout, path: str, /, static=True,
         else:
             y = ['2 символа', '3 символа', '4 символа', '5 символов']
             convs, l_ch, r_ch = layout.per_readf(path, linemode=linemode)
-            title = f"Удобные переборы. Левая рука\n{filename}"
-            v.bars(l_ch, layout.color, layout.name, y, title)
-            title = f"Удобные переборы. Правая рука\n{filename}"
-            v.bars(r_ch, layout.color, layout.name, y, title)
+            all_ch = [l_ch[i] + r_ch[i] for i in range(len(l_ch))]
+            title = f"Удобные переборы. {filename}"
+            v.bars(all_ch, layout.color, layout.name, y, title)
             title = "Кол-во удобных переборов\n"
             v.arm_pie(convs, layout.name, title, ['НУ', 'ЧУ', 'У'])
         plt.show()
@@ -35,25 +34,38 @@ def show(layout: list | s.Layout, path: str, /, static=True,
     colors = [lo.color for lo in los]
     names = [lo.name for lo in los]
     if static:
-        rets = [lo.readf(path) for lo in los]
+        rets = []
+        for lo in los:
+            ret = lo.readf(path)
+            rets.append(ret)
+            print(f"{lo.name} ☑")
         l_fingers = [ret[1] for ret in rets]
+        l_sums = [sum(item) for item in l_fingers]
         l_arms = [ret[2] for ret in rets]
         v.arm_pies(l_arms, names)
-        title = f"Нагрузка на пальцы. Сравнение раскладок в {filename}\n"
-        v.hbars(l_fingers, colors, names, y, title)
+        title = f"Общее кол-во штрафов. Сравнение раскладок в {filename}\n"
+        v.sum_bars(l_sums, colors, names, title)
         plt.show()
         return
     y = ['2 символа', '3 символа', '4 символа', '5 символов']
-    rets = [lo.per_readf(path) for lo in los]
+    rets = []
+    for lo in los:
+        ret = lo.per_readf(path)
+        rets.append(ret)
+        print(f"{lo.name} ☑")
     l_convs = [ret[0] for ret in rets]
     l_l = [ret[1] for ret in rets]
     l_r = [ret[2] for ret in rets]
+    l_all = []
+    for litem, ritem in zip(l_l, l_r):
+        item = []
+        for i in range(len(litem)):
+            item.append(litem[i] + ritem[i])
+        l_all.append(item)
     labels = ['НУ', 'ЧУ', 'У']
     v.arm_pies(l_convs, names, labels=labels)
-    title = f"Удобные переборы. Левая рука. {filename}"
-    v.bars(l_l, colors, names, y, title) 
-    title = f"Удобные переборы. Правая рука. {filename}"
-    v.bars(l_r, colors, names, y, title)
+    title = f"Удобные переборы. {filename}"
+    v.bars(l_all, colors, names, y, title) 
     plt.show()
     
 

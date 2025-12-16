@@ -141,3 +141,24 @@ def bars(data, colors, names, xlabels, /, title=''):
     ax.set_axisbelow(True)
     ax.grid(axis='y', ls='dashed')
 
+def sum_bars(data, colors, names, title):
+    x = names
+    fig, ax = plt.subplots()
+    y = data
+    x_pos = np.arange(len(x))
+    ax.bar(x_pos, y, color=colors, width=0.3, label=names)
+    ax.set_title(title, **for_title)
+    for i, v in enumerate(y):
+        if v == 0:
+            continue
+        ax.text(i, v, str(v), size=size, ha='center')
+    ax.set_xticks(ticks=x_pos, labels=x, size=size)
+    ax.legend()
+
+    ax.set_ylabel("Кол-во штрафов", size=size)
+    ax.ticklabel_format(axis='y', style='plain')
+    ax.tick_params(axis='y', labelsize=size)
+    ax.set_axisbelow(True)
+    ax.grid(axis='y', ls='dashed')
+
+
