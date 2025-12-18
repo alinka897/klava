@@ -4,46 +4,80 @@ import pandas
 import structs as s
 
 for_title = dict(fontsize=18, color='k', fontweight='bold')
+for_mult = dict(fontsize=14, color='k', fontweight='bold')
 size = '14'
 pie_colors = ['#90369c', '#55bda4', '#e88f2a']
 
 
-def arm_pie(data: list, name: list, title: str, labels: list, /, ax=''):
+def for_text(text: str) -> str:
+    if text.isnumeric():
+        if 3 < len(text) < 7:
+            text = text[:-3] + '.' + text[-3] + 'k'
+        if 6 < len(text) < 10:
+            text = text[:-6] + '.' + text[-3] + 'M'
+    return text
+
+
+def arm_pie(data: list, name: list, title: str, labels: list, /, ax='',
+            mult=False):
     """
     Создание круговой диаграммы для рук (левая, правая, двуручие) и переборов
     """
     if ax == '':
         fig, ax = plt.subplots()
-    title = title + f"{name}\nВсего: {sum(data)}"
+        title = title + f"{name}\nВсего: {sum(data)}"
 
+    if mult:
+        title = f"{name}\nВсего: " + for_text(str(sum(data)))
     filtr_lab = [labels[i] for i in range(len(data)) if data[i] != 0]
     filtr_data = [data[i] for i in range(len(data)) if data[i] != 0]
     wedges, texts, autotexts = ax.pie(filtr_data, colors=pie_colors,
                                       autopct='%1.1f%%',
                                       textprops={'fontsize': size})
-    ax.set_title(title, **for_title)
-    lbs = [filtr_lab[i] + f' ({filtr_data[i]})' for i in range(len(filtr_data))] 
-    ax.legend(wedges, labels=lbs, loc='upper right')
+    if mult:
+        ax.set_title(title, **for_mult, y=-0.2)
+    else:
+        ax.set_title(title, **for_title)
+    lbs = [filtr_lab[i] + f' ({filtr_data[i]})'
+           for i in range(len(filtr_data))] 
+    if mult:
+        return lbs, wedges
+    else:
+        ax.legend(wedges, labels=lbs, loc='upper right')
+        plt.tight_layout()
 
 
 def arm_pies(l_arms, names, /, labels=["Левая", "Обе", "Правая"],
              title=''):
-    col = round(len(l_arms) / 2)
-    fig, axs = plt.subplots(2, col)
+    if len(l_arms) < 5:
+        axs_num = len(l_arms) * 2
+        row = 2
+    else:
+        row = 4
+        axs_num = 16
+    col = axs_num // row
+    ratios = [2 if i % 2 == 0 else 1 for i in range(row)]
+    fig, axs = plt.subplots(nrows=row, ncols=col,
+                            gridspec_kw={'height_ratios': ratios})
     
-    for i in 0, 1:
+    for i in range(row):
         for j in range(col):
             index = i*col + j
-            if col == 1:
-                arm_pie(l_arms[index], names[index], title,
-                        labels, ax=axs[i]) 
+            if (i % 2 == 1):
+                continue
             else:
-                if index > (len(l_arms) - 1):
+                if index >= (len(l_arms) + col):
                     fig.delaxes(axs[i, j]) 
+                    fig.delaxes(axs[i + 1, j]) 
                     continue
-                arm_pie(l_arms[index], names[index], title,
-                        labels, ax=axs[i, j]) 
-
+                if i == 2:
+                    index -= col
+                lbs, wedges = arm_pie(l_arms[index],
+                                       names[index], title, labels,
+                                       ax=axs[i, j], mult=True) 
+                axs[i + 1, j].axis('off')
+                axs[i + 1, j].legend(wedges, lbs, prop={'size':10},
+                                     loc='upper center')
 
 def hbars(data, colors, names, ylabels, /, title=''):
     """
@@ -61,7 +95,7 @@ def hbars(data, colors, names, ylabels, /, title=''):
         for i, v in enumerate(x):
             if v == 0:
                 continue
-            ax.text(v, i, str(v), size=size, va='center')
+            ax.text(v, i, for_text(str(v)), size=size, va='center')
         ax.set_yticks(ticks=y_pos, labels=y, size=size)
 
     else:
@@ -87,7 +121,6 @@ def hbars(data, colors, names, ylabels, /, title=''):
     ax.legend()
 
     ax.set_xlabel("Кол-во штрафов", size=size)
-    ax.ticklabel_format(axis='x', style='plain')
     ax.invert_yaxis()
     ax.tick_params(axis='x', labelsize=size)
     ax.set_axisbelow(True)
@@ -110,7 +143,7 @@ def bars(data, colors, names, xlabels, /, title=''):
         for i, v in enumerate(y):
             if v == 0:
                 continue
-            ax.text(i, v, str(v), size=size, ha='center')
+            ax.text(i, v, for_text(for_text(str(v))), size=size, ha='center')
         ax.set_xticks(ticks=x_pos, labels=x, size=size)
 
     else:
@@ -136,7 +169,6 @@ def bars(data, colors, names, xlabels, /, title=''):
     ax.legend()
 
     ax.set_ylabel("Кол-во", size=size)
-    ax.ticklabel_format(axis='y', style='plain')
     ax.tick_params(axis='y', labelsize=size)
     ax.set_axisbelow(True)
     ax.grid(axis='y', ls='dashed')
@@ -146,17 +178,16 @@ def sum_bars(data, colors, names, title):
     fig, ax = plt.subplots()
     y = data
     x_pos = np.arange(len(x))
-    ax.bar(x_pos, y, color=colors, width=0.3, label=names)
+    ax.bar(x_pos, y, color=colors, width=0.1, label=names)
     ax.set_title(title, **for_title)
     for i, v in enumerate(y):
         if v == 0:
             continue
-        ax.text(i, v, str(v), size=size, ha='center')
+        ax.text(i, v, for_text(for_text(str(v))), size=size, ha='center')
     ax.set_xticks(ticks=x_pos, labels=x, size=size)
     ax.legend()
 
     ax.set_ylabel("Кол-во штрафов", size=size)
-    ax.ticklabel_format(axis='y', style='plain')
     ax.tick_params(axis='y', labelsize=size)
     ax.set_axisbelow(True)
     ax.grid(axis='y', ls='dashed')
