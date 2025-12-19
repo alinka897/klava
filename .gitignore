@@ -1,4 +1,6 @@
 __pycache__/
+*.txt
+!texts/*.txt
 # Sphinx
 docs/_build/*
 # Environments
