@@ -1,195 +1,223 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas
-import structs as s
+import pandas as pd
 
-for_title = dict(fontsize=18, color='k', fontweight='bold')
-for_mult = dict(fontsize=14, color='k', fontweight='bold')
-size = '14'
+# ---------- BASE STYLES ----------
+BASE_TITLE = 18
+BASE_LABEL = 14
+BASE_TICK = 12
+BASE_LEGEND = 12
+
 pie_colors = ['#90369c', '#55bda4', '#e88f2a']
 
 
+# ---------- ADAPTIVE SCALING ----------
+def _auto_scale(ax):
+    """
+    Scale fonts & legend based on figure size (Qt-safe)
+    """
+    fig = ax.figure
+    w, h = fig.get_size_inches()
+
+    # reference ~8x6
+    scale = min(w / 8, h / 6)
+    scale = max(0.6, min(scale, 1.2))  # clamp
+
+    # title
+    if ax.title:
+        ax.title.set_fontsize(BASE_TITLE * scale)
+
+    # axis labels
+    ax.xaxis.label.set_fontsize(BASE_LABEL * scale)
+    ax.yaxis.label.set_fontsize(BASE_LABEL * scale)
+
+    # ticks
+    for t in ax.get_xticklabels() + ax.get_yticklabels():
+        t.set_fontsize(BASE_TICK * scale)
+
+    # legend
+    leg = ax.get_legend()
+    if leg:
+        for t in leg.get_texts():
+            t.set_fontsize(BASE_LEGEND * scale)
+
+        # move legend if tight
+        if w < 5:
+            leg.set_bbox_to_anchor((1.02, 1))
+            leg.set_loc("upper left")
+
+
+# ---------- NUMBER FORMAT ----------
 def for_text(text: str) -> str:
     if text.isnumeric():
-        if 3 < len(text) < 7:
-            text = text[:-3] + '.' + text[-3] + 'k'
-        if 6 < len(text) < 10:
-            text = text[:-6] + '.' + text[-3] + 'M'
+        n = int(text)
+        if 1_000 <= n < 1_000_000:
+            return f"{n/1_000:.1f}k"
+        if n >= 1_000_000:
+            return f"{n/1_000_000:.1f}M"
     return text
 
 
-def arm_pie(data: list, name: list, title: str, labels: list, /, ax='',
-            mult=False):
-    """
-    Создание круговой диаграммы для рук (левая, правая, двуручие) и переборов
-    """
-    if ax == '':
-        fig, ax = plt.subplots()
-        title = title + f"{name}\nВсего: {sum(data)}"
+# ---------- SUM BARS ----------
+def sum_bars(data, colors, names, title, *, ax=None):
+    created = ax is None
+    if created:
+        _, ax = plt.subplots()
 
-    if mult:
-        title = f"{name}\nВсего: " + for_text(str(sum(data)))
-    filtr_lab = [labels[i] for i in range(len(data)) if data[i] != 0]
-    filtr_data = [data[i] for i in range(len(data)) if data[i] != 0]
-    wedges, texts, autotexts = ax.pie(filtr_data, colors=pie_colors,
-                                      autopct='%1.1f%%',
-                                      textprops={'fontsize': size})
-    if mult:
-        ax.set_title(title, **for_mult, y=-0.2)
-    else:
-        ax.set_title(title, **for_title)
-    lbs = [filtr_lab[i] + f' ({filtr_data[i]})'
-           for i in range(len(filtr_data))] 
-    if mult:
-        return lbs, wedges
-    else:
-        ax.legend(wedges, labels=lbs, loc='upper right')
+    pos = np.arange(len(names))
+    ax.bar(pos, data, color=colors, width=0.5)
+
+    for i, v in enumerate(data):
+        if v:
+            ax.text(i, v, for_text(str(v)), ha='center', va='bottom')
+
+    ax.set_xticks(pos, names)
+    ax.set_title(title)
+    ax.set_ylabel("Кол-во штрафов")
+    ax.grid(axis='y', ls='dashed')
+
+    _auto_scale(ax)
+    if created:
         plt.tight_layout()
 
 
-def arm_pies(l_arms, names, /, labels=["Левая", "Обе", "Правая"],
-             title=''):
-    if len(l_arms) < 5:
-        axs_num = len(l_arms) * 2
-        row = 2
-    else:
-        row = 4
-        axs_num = 16
-    col = axs_num // row
-    ratios = [2 if i % 2 == 0 else 1 for i in range(row)]
-    fig, axs = plt.subplots(nrows=row, ncols=col,
-                            gridspec_kw={'height_ratios': ratios})
-    
-    for i in range(row):
-        for j in range(col):
-            index = i*col + j
-            if (i % 2 == 1):
-                continue
-            else:
-                if index >= (len(l_arms) + col):
-                    fig.delaxes(axs[i, j]) 
-                    fig.delaxes(axs[i + 1, j]) 
-                    continue
-                if i == 2:
-                    index -= col
-                lbs, wedges = arm_pie(l_arms[index],
-                                       names[index], title, labels,
-                                       ax=axs[i, j], mult=True) 
-                axs[i + 1, j].axis('off')
-                axs[i + 1, j].legend(wedges, lbs, prop={'size':10},
-                                     loc='upper center')
+# ---------- PIE ----------
+def arm_pie(data, name, title, labels, *, ax=None, mult=False):
 
-def hbars(data, colors, names, ylabels, /, title=''):
-    """
-    Создание горизонтальных столбчатых диаграмм
-    """
-    y = ylabels
 
-    fig, ax = plt.subplots()
+    created = ax is None
+    if created:
+        _, ax = plt.subplots()
+
+    total = sum(data)
+    title = f"{name}\nВсего: {for_text(str(total))}"
+
+    vals = [v for v in data if v != 0]
+    labs = [labels[i] for i, v in enumerate(data) if v != 0]
+
+    wedges, *_ = ax.pie(
+        vals,
+        colors=pie_colors,
+        autopct='%1.1f%%',
+        textprops={'fontsize': BASE_TICK}
+    )
+
+    ax.set_title(title)
+    fig = ax.figure
+    w, h = fig.get_size_inches()
+
+    # Push legend further down for small windows
+    legend_y = -0.10 if h < 4 else -0.07
+
+    ax.legend(
+        wedges,
+        [f"{l} ({v})" for l, v in zip(labs, vals)],
+        loc='upper center',
+        bbox_to_anchor=(0.5, legend_y),
+        ncol=1,
+        frameon=False
+    )
+
+    ax.set_aspect('equal')
+    _auto_scale(ax)
+
+    if created:
+        plt.tight_layout()
+
+
+def arm_pies(l_arms, names, labels=("Левая", "Обе", "Правая"), title=""):
+    count = len(l_arms)
+    cols = 2
+    rows = (count + 1) // 2
+
+    fig, axs = plt.subplots(rows, cols)
+    axs = np.atleast_2d(axs)
+
+    for i, (data, name) in enumerate(zip(l_arms, names)):
+        r, c = divmod(i, cols)
+        arm_pie(data, name, title, labels, ax=axs[r, c])
+
+    for i in range(count, rows * cols):
+        fig.delaxes(axs.flatten()[i])
+
+    plt.tight_layout()
+
+
+# ---------- HORIZONTAL BARS ----------
+def hbars(data, colors, names, ylabels, title="", *, ax=None, height=0.6):
+    created = ax is None
+    if created:
+        _, ax = plt.subplots()
 
     if isinstance(colors, str):
-        x = data
-        y_pos = np.arange(len(y))
-        ax.barh(y_pos, x, color=colors, height=0.5, label=names)
-        ax.set_title(title, **for_title)
-        for i, v in enumerate(x):
-            if v == 0:
-                continue
-            ax.text(v, i, for_text(str(v)), size=size, va='center')
-        ax.set_yticks(ticks=y_pos, labels=y, size=size)
+        pos = np.arange(len(ylabels))
+        ax.barh(pos, data, color=colors, height=height)
+
+        for i, v in enumerate(data):
+            if v:
+                ax.text(v, i, for_text(str(v)), va='center')
+
+        ax.set_yticks(pos, ylabels)
 
     else:
-        d = dict(graph=y)
-        for i in range(len(names)):
-            d[names[i]] = data[i]
+        df = pd.DataFrame(data, index=names, columns=ylabels).T
+        scale = max(2.0, len(ylabels) * 0.6)
+        ind = np.arange(len(df)) * scale
+        width = scale / (len(names) + 1)
 
-        df = pandas.DataFrame(d)
-        scale = 2.5
-        ind = np.arange(len(df))*scale
-        width = 0.3
+        for i, name in enumerate(names):
+            ax.barh(ind + i * width, df[name], width, label=name)
+            for j, v in enumerate(df[name]):
+                if v:
+                    ax.text(v, ind[j] + i * width, for_text(str(v)), va='center')
 
-        for i in range(len(names)):
-            ax.barh(ind + i * width, getattr(df, names[i]),
-                    width, color=colors[i], label=names[i])
-            for index, value in enumerate(data[i]):
-                if value == 0:
-                    continue
-                ax.text(value, index*scale + width * i, str(value), va='center')
+        ax.set_yticks(ind, df.index)
 
-        ax.set_title(title, **for_title)
-        ax.set_yticks(ind, labels=df.graph, size=size)
+    ax.set_title(title)
+    ax.set_xlabel("Кол-во штрафов")
     ax.legend()
-
-    ax.set_xlabel("Кол-во штрафов", size=size)
     ax.invert_yaxis()
-    ax.tick_params(axis='x', labelsize=size)
-    ax.set_axisbelow(True)
     ax.grid(axis='x', ls='dashed')
 
+    _auto_scale(ax)
+    if created:
+        plt.tight_layout()
 
-def bars(data, colors, names, xlabels, /, title=''):
-    """
-    Создание столбчатых диаграмм
-    """
-    x = xlabels
 
-    fig, ax = plt.subplots()
+# ---------- VERTICAL BARS ----------
+def bars(data, colors, names, xlabels, title="", *, ax=None):
+    created = ax is None
+    if created:
+        _, ax = plt.subplots()
 
     if isinstance(colors, str):
-        y = data
-        x_pos = np.arange(len(x))
-        ax.bar(x_pos, y, color=colors, width=0.5, label=names)
-        ax.set_title(title, **for_title)
-        for i, v in enumerate(y):
-            if v == 0:
-                continue
-            ax.text(i, v, for_text(for_text(str(v))), size=size, ha='center')
-        ax.set_xticks(ticks=x_pos, labels=x, size=size)
+        pos = np.arange(len(xlabels))
+        ax.bar(pos, data, color=colors, width=0.5)
+
+        for i, v in enumerate(data):
+            if v:
+                ax.text(i, v, for_text(str(v)), ha='center')
+
+        ax.set_xticks(pos, xlabels)
 
     else:
-        d = dict(graph=x)
-        for i in range(len(names)):
-            d[names[i]] = data[i]
-
-        df = pandas.DataFrame(d)
-        scale = 2.5
-        ind = np.arange(len(df))*scale
+        df = pd.DataFrame(data, index=names, columns=xlabels).T
+        ind = np.arange(len(df)) * 2.5
         width = 0.3
 
-        for i in range(len(names)):
-            ax.bar(ind + i * width, getattr(df, names[i]),
-                    width, color=colors[i], label=names[i])
-            for index, value in enumerate(data[i]):
-                if value == 0:
-                    continue
-                ax.text(index*scale + width * i, value, str(value), ha='center')
+        for i, name in enumerate(names):
+            ax.bar(ind + i * width, df[name], width, label=name)
+            for j, v in enumerate(df[name]):
+                if v:
+                    ax.text(ind[j] + i * width, v, for_text(str(v)), ha='center')
 
-        ax.set_title(title, **for_title)
-        ax.set_xticks(ind, labels=df.graph, size=size)
+        ax.set_xticks(ind, df.index)
+
+    ax.set_title(title)
+    ax.set_ylabel("Кол-во")
     ax.legend()
-
-    ax.set_ylabel("Кол-во", size=size)
-    ax.tick_params(axis='y', labelsize=size)
-    ax.set_axisbelow(True)
     ax.grid(axis='y', ls='dashed')
 
-def sum_bars(data, colors, names, title):
-    x = names
-    fig, ax = plt.subplots()
-    y = data
-    x_pos = np.arange(len(x))
-    ax.bar(x_pos, y, color=colors, width=0.1, label=names)
-    ax.set_title(title, **for_title)
-    for i, v in enumerate(y):
-        if v == 0:
-            continue
-        ax.text(i, v, for_text(for_text(str(v))), size=size, ha='center')
-    ax.set_xticks(ticks=x_pos, labels=x, size=size)
-    ax.legend()
-
-    ax.set_ylabel("Кол-во штрафов", size=size)
-    ax.tick_params(axis='y', labelsize=size)
-    ax.set_axisbelow(True)
-    ax.grid(axis='y', ls='dashed')
-
-
+    _auto_scale(ax)
+    if created:
+        plt.tight_layout()
